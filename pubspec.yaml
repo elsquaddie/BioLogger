@@ -37,6 +37,7 @@ dependencies:
   sqflite: ^2.0.0  # Используй последнюю версию, или укажи конкретную версию, если нужно
   path: ^1.8.0     # Пакет 'path' тоже нужен для работы с путями к файлам
   get: ^4.6.5
+  intl: ^0.18.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

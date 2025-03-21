@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import '../../domain/controllers/data_entry_controller.dart'; // Импорт DataEntryController
 
 class DataEntryScreen extends StatefulWidget {
@@ -28,22 +29,29 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
     ever(_dataEntryController.currentParameterIndex, (index) {
       _updateTextFieldForParameter();
     });
+
+    ever(_dataEntryController.selectedDate, (date) {
+      _updateTextFieldForParameter();
+    });
   }
 
   Future<void> _updateTextFieldForParameter() async {
     final currentParameter = _dataEntryController.currentParameter;
     if (currentParameter != null) {
-      final now = DateTime.now();
-      final normalizedDate = DateTime(now.year, now.month, now.day);
+      // Use selectedDate from controller instead of DateTime.now()
+      final selectedDate = _dataEntryController.selectedDate.value;
+      final normalizedDate = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
       
-      // Получаем запись напрямую из базы данных
+      // Получаем запись для выбранной даты
       final dailyRecord = await _dataEntryController.getDailyRecordByDate(normalizedDate);
 
       if (mounted) {
         String value = '';
         if (dailyRecord != null) {
           value = dailyRecord.dataValues[currentParameter.id.toString()]?.toString() ?? '';
-          print('Found value for parameter ${currentParameter.id}: $value');
+          print('Found value for parameter ${currentParameter.id}: $value for date: ${normalizedDate.toIso8601String()}');
+        } else {
+          print('No record found for date: ${normalizedDate.toIso8601String()}');
         }
 
         setState(() {
@@ -86,6 +94,36 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
           child: Column( // Используем Column для вертикального расположения элементов
             crossAxisAlignment: CrossAxisAlignment.start, // Выравнивание по левому краю
             children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Дата:', style: TextStyle(fontSize: 18)),
+                  Obx(() => TextButton(
+                    onPressed: () async {
+                      DateTime? pickedDate = await showDatePicker(
+                        context: context,
+                        initialDate: _dataEntryController.selectedDate.value,
+                        firstDate: DateTime(2023),
+                        lastDate: DateTime.now(),
+                      );
+                      if (pickedDate != null) {
+                        _dataEntryController.selectDate(pickedDate);
+                      }
+                    },
+                    child: Row(
+                      children: [
+                        const Icon(Icons.calendar_today),
+                        const SizedBox(width: 8),
+                        Text(
+                          DateFormat('dd.MM.yyyy').format(_dataEntryController.selectedDate.value),
+                          style: const TextStyle(fontSize: 18),
+                        ),
+                      ],
+                    ),
+                  )),
+                ],
+              ),
+              const SizedBox(height: 20),
               Text( // Отображение названия текущего параметра
                 currentParameter.name,
                 style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),

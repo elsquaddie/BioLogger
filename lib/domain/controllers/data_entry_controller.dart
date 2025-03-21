@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import '../../models/parameter.dart';
 import '../../domain/controllers/parameter_controller.dart'; // Импорт ParameterController
 import '../../data/repositories/daily_record_repository_impl.dart';
@@ -11,23 +12,26 @@ class DataEntryController extends GetxController {
   final parametersForEntry = <Parameter>[].obs;
   final enteredValues = <String, dynamic>{}.obs;
   final currentParameterIndex = 0.obs;
+  Rx<DateTime> selectedDate = DateTime.now().obs;
 
   @override
   void onInit() {
     super.onInit();
-    _loadParametersForEntry(); // <--- Загружаем параметры сразу при инициализации
+    selectDate(DateTime.now());
 
     // Слушаем изменения в списке параметров ParameterController
     ever(_parameterController.parameters, (updatedParameters) { // <--- СЛУШАЕМ parameters, А НЕ isParametersLoaded
-      _loadParametersForEntry(); // <--- Перезагружаем параметры при изменении списка в ParameterController
+      _loadParametersForEntryForDate(selectedDate.value); // <--- Перезагружаем параметры при изменении списка в ParameterController
     });
   }
 
+  void selectDate(DateTime date) {
+    selectedDate.value = date;
+    _loadParametersForEntryForDate(date);
+  }
 
-  void _loadParametersForEntry() async {
-    // Normalize current date when loading records
-    final now = DateTime.now();
-    final normalizedDate = DateTime(now.year, now.month, now.day);
+  void _loadParametersForEntryForDate(DateTime selectedDate) async {
+    final normalizedDate = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
     final dailyRecord = await loadDailyRecordForDate(normalizedDate);
     final allParameters = _parameterController.parameters; // <--- Берем параметры ИЗ ParameterController напрямую
     parametersForEntry.assignAll(allParameters);
@@ -53,7 +57,6 @@ class DataEntryController extends GetxController {
       parametersForEntry.isNotEmpty && currentParameterIndex.value < parametersForEntry.length
           ? parametersForEntry[currentParameterIndex.value]
           : null;
-
 
   void updateEnteredValue(String parameterId, dynamic value) {
     enteredValues[parameterId] = value;
@@ -87,18 +90,27 @@ class DataEntryController extends GetxController {
       }
     }
 
+    final normalizedDate = DateTime(selectedDate.value.year, selectedDate.value.month, selectedDate.value.day);
     final dailyRecord = DailyRecord(
-      date: DateTime.now(),
+      date: normalizedDate,
       dataValues: dataValuesMap,
     );
 
     try {
       await _dailyRecordRepository.insertDailyRecord(dailyRecord);
       print("Ежедневная запись успешно сохранена!");
-      // Reload the record to update UI
-      await loadDailyRecordForDate(DateTime.now());
+      Get.snackbar(
+        'Успех',
+        'Данные сохранены за ${DateFormat('dd.MM.yyyy').format(selectedDate.value)}',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     } catch (e) {
       print("Ошибка сохранения ежедневной записи: $e");
+      Get.snackbar(
+        'Ошибка',
+        'Не удалось сохранить данные',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     }
   }
 
@@ -111,6 +123,10 @@ class DataEntryController extends GetxController {
       enteredValues.assignAll(dailyRecord.dataValues.map((key, value) => MapEntry(key, value)));
     } else {
       print("Запись не найдена");
+      enteredValues.clear();
+      for (var parameter in parametersForEntry) {
+        enteredValues[parameter.id.toString()] = '';
+      }
     }
     return dailyRecord;
   }
