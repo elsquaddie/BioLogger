@@ -1,21 +1,33 @@
-<<<<<<< HEAD
-# biologgs
-
-A new Flutter project.
-
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-=======
 # BioLogger
-An application for convenient life quality data keeping for further export and analysis
->>>>>>> 9f11704651e36e12454162cafc23468d612bfdf9
+
+BioLogger is an application for convenient tracking of life quality data with the ability to export and analyze it later.
+
+## Key Features
+
+### Parameter Constructor
+- Create custom parameters for tracking:
+  - Name
+  - Data type
+  - Unit of measurement
+  - Scale options
+- "Parameter Editor" screen for creating, viewing, and managing the parameter list.
+- Save parameters in a local SQLite database.  
+  ✅ **Implemented!**
+
+### Daily Data Entry
+- User-friendly interface for quick data entry for each parameter per day.
+- "Data Entry" screen with sequential parameter input.
+- Proper saving and loading of daily records with entered values in a local SQLite database.  
+  ✅ **Implemented!** (basic functionality, UI/UX improvements planned)
+
+### Local Data Storage
+- Use of SQLite database for storing parameters and daily records on the user's device.  
+  ✅ **Implemented!** (database structure and basic CRUD operations)
+- Basic data export/import functionality in JSON format.  
+  ⏳ **In progress** (next MVP task).
+
+## Installation and Setup
+1. Ensure you have [Flutter](https://flutter.dev/) installed.
+2. Clone the repository:
+   ```bash
+   git clone https://github.com/elsquaddie/BioLogger.git
