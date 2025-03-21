@@ -2,17 +2,23 @@ import 'package:get/get.dart';
 import '../../models/daily_record.dart';
 import '../../data/repositories/daily_record_repository.dart';
 import '../../data/repositories/daily_record_repository_impl.dart';
+import '../use_cases/export_data_use_case.dart';
+import '../../utils/csv_exporter.dart';
+import '../../models/parameter.dart';
 
 class DailyRecordController extends GetxController {
-  final DailyRecordRepository _dailyRecordRepository = DailyRecordRepositoryImpl(); // Репозиторий для ежедневных записей
+  final DailyRecordRepository _dailyRecordRepository;
+  final ExportDataUseCase _exportDataUseCase;
 
-  final dailyRecords = <DailyRecord>[].obs; // Observable список ежедневных записей
-  final selectedRecord = Rxn<DailyRecord>(); // Observable для выбранной записи (например, для редактирования)
+  DailyRecordController(this._dailyRecordRepository, this._exportDataUseCase);
+
+  final dailyRecords = <DailyRecord>[].obs;
+  final selectedRecord = Rxn<DailyRecord>();
 
   @override
   void onInit() {
     super.onInit();
-    loadDailyRecords(); // Загружаем записи при инициализации
+    loadDailyRecords();
   }
 
   Future<void> loadDailyRecords() async {
@@ -20,7 +26,6 @@ class DailyRecordController extends GetxController {
       final loadedRecords = await _dailyRecordRepository.getAllDailyRecords();
       dailyRecords.assignAll(loadedRecords);
     } catch (e) {
-      // TODO: Обработка ошибок
       print("Error loading daily records: $e");
     }
   }
@@ -43,7 +48,6 @@ class DailyRecordController extends GetxController {
         dailyRecords.add(newRecord);
       }
     } catch (e) {
-      // TODO: Обработка ошибок
       print("Error creating daily record: $e");
     }
   }
@@ -57,7 +61,6 @@ class DailyRecordController extends GetxController {
         dailyRecords.refresh();
       }
     } catch (e) {
-      // TODO: Обработка ошибок
       print("Error updating daily record: $e");
     }
   }
@@ -67,8 +70,19 @@ class DailyRecordController extends GetxController {
       await _dailyRecordRepository.deleteDailyRecord(id);
       dailyRecords.removeWhere((record) => record.id == id);
     } catch (e) {
-      // TODO: Обработка ошибок
       print("Error deleting daily record: $e");
+    }
+  }
+
+  Future<void> exportDataToCsv() async {
+    try {
+      final (parameters, dailyRecords) = await _exportDataUseCase.execute();
+      final csvData = CsvExporter.convertToCsv(parameters, dailyRecords);
+      await CsvExporter.saveCsvFile(csvData);
+      Get.snackbar('Успех', 'Данные экспортированы в CSV файл.\nПроверьте консоль для пути к файлу.');
+    } catch (e) {
+      print('Ошибка экспорта CSV: $e');
+      Get.snackbar('Ошибка', 'Не удалось экспортировать данные в CSV');
     }
   }
 }

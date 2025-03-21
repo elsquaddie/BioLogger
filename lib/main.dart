@@ -1,14 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:biologgs/presentation/screens/parameter_edit_screen.dart';
-import 'package:biologgs/presentation/screens/data_entry_screen.dart';
-import 'package:biologgs/domain/controllers/parameter_controller.dart';
-import 'package:biologgs/domain/controllers/data_entry_controller.dart';
-import 'package:biologgs/presentation/screens/home_screen.dart';
+import 'presentation/screens/home_screen.dart';
+import 'data/repositories/daily_record_repository.dart';
+import 'data/repositories/daily_record_repository_impl.dart';
+import 'data/repositories/parameter_repository.dart';
+import 'data/repositories/parameter_repository_impl.dart';
+import 'domain/use_cases/export_data_use_case.dart';
+import 'domain/controllers/daily_record_controller.dart';
+import 'domain/controllers/parameter_controller.dart';
+import 'domain/controllers/data_entry_controller.dart';
 
 void main() {
+  // Регистрируем зависимости
+  // Repositories
+  Get.put<DailyRecordRepository>(DailyRecordRepositoryImpl());
+  Get.put<ParameterRepository>(ParameterRepositoryImpl());
+
+  // Use Cases
+  Get.put(ExportDataUseCase(
+    Get.find<DailyRecordRepository>(),
+    Get.find<ParameterRepository>(),
+  ));
+
+  // Controllers
+  Get.put(DailyRecordController(
+    Get.find<DailyRecordRepository>(),
+    Get.find<ExportDataUseCase>(),
+  ));
   Get.put(ParameterController());
   Get.put(DataEntryController());
+
   runApp(const MyApp());
 }
 

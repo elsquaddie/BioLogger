@@ -38,6 +38,7 @@ dependencies:
   path: ^1.8.0     # Пакет 'path' тоже нужен для работы с путями к файлам
   get: ^4.6.5
   intl: ^0.18.0
+  path_provider: ^2.0.14
 dev_dependencies:
   flutter_test:
     sdk: flutter
