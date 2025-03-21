@@ -9,7 +9,6 @@ BioLogger is an application for convenient tracking of life quality data with th
   - Name
   - Data type
   - Unit of measurement
-  - Scale options
 - "Parameter Editor" screen for creating, viewing, and managing the parameter list.
 - Save parameters in a local SQLite database.  
   ✅ **Implemented!**
