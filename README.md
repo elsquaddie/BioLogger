@@ -11,7 +11,7 @@
   - Name
   - Data type
   - Unit of measurement
-  - Scale options (for specific data types)
+    
 - "Parameter Editor" screen for creating and viewing the parameter list.
 - Save parameters in a local SQLite database.
   ✅ **Implemented!**
