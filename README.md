@@ -1,4 +1,4 @@
-# BioLog (BioLogger)
+# BioLogger app
 
 **Application for tracking life quality data with export and analysis capabilities.**
 
