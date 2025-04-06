@@ -1,64 +1,74 @@
-# BioLogger app
+# BioLog 🌿
 
-**Application for tracking life quality data with export and analysis capabilities.**
+**A Flutter application for easily tracking personal metrics, life quality data, and exporting it for analysis.**
 
-**Current Status: MVP (Minimum Viable Product) - ✅ Completed!**
+Define what matters to you, log your daily progress, and gain insights from your data.
 
-**MVP Key Features:**
+<!-- TODO: Add a screenshot or GIF demonstrating the app's main screens (e.g., parameter list, data entry, home screen) -->
+<!-- You can embed images using Markdown: ![Alt Text](path/to/image.png) -->
 
-### 1. Parameter Constructor
-- Create custom parameters for tracking:
-  - Name
-  - Data type
-  - Unit of measurement
-    
-- "Parameter Editor" screen for creating and viewing the parameter list.
-- Save parameters in a local SQLite database.
-  ✅ **Implemented!**
+## ✨ Key Features (Current)
 
-### 2. Daily Data Entry
-- User-friendly interface for quick data entry for each parameter per day.
-- "Data Entry" screen with sequential parameter input.
-- Saving daily records with entered values in a local SQLite database.
-  ✅ **Implemented!** (basic functionality, UI/UX improvements planned for Post-MVP)
+*   **📝 Custom Parameter Management:**
+    *   Create parameters you want to track (e.g., Sleep Hours, Mood, Water Intake, Workout Duration).
+    *   Define parameter details: Name, Data Type (Number, Text, Rating, Yes/No, Time, Date), Unit of Measurement.
+    *   View, **Edit**, and **Delete** your parameters easily through a dedicated management screen.
+*   **📅 Daily Data Logging:**
+    *   Simple, sequential interface for entering values for each of your defined parameters daily.
+*   **📤 Export & Share Data:**
+    *   Generate a comprehensive CSV file containing all your parameters and daily entries.
+    *   **Share the CSV file seamlessly** using the native system share dialog – send it to your messenger, email, cloud storage, or any compatible app without needing extra permissions.
+*   **📱 Local & Private Storage:**
+    *   All your data (parameters and daily records) is stored securely **on your device only** using an SQLite database.
 
-### 3. Local Storage and Data Export
-- Utilizing an SQLite database for local storage of parameters and daily records on the user's device.
-  ✅ **Implemented!** (database structure and basic CRUD operations)
-- **Data Export to CSV format.** Ability to export all data to a CSV file for further analysis and processing.
-  ✅ **Implemented!** (basic CSV export functionality)
+## 🚀 Project Status
 
-## Post-MVP Plans (after the first version release):
+**✅ MVP (Minimum Viable Product) Complete!**
 
-**Focus on improving user experience and expanding functionality:**
+The core functionalities (parameter management, basic data entry, local storage, export/share) are implemented and working.
 
-1.  **Enhanced "Parameter Editor":**
-    *   Editing existing parameters.
-    *   Deleting parameters.
+**🚧 Actively working on Post-MVP enhancements** focused on improving User Experience (UX) and adding more input flexibility.
 
-2.  **Improved and User-Friendly "Data Entry":**
-    *   Enhanced UI/UX of the "Data Entry" screen.
-    *   Various input field types based on parameter type (numeric fields, sliders, switches, select boxes, etc.).
-    *   10-point rating scale (potentially with emojis) for "Rating" type parameters.
-    *   Parameter Presets: a set of pre-defined parameters for a quick start (e.g., "Sleep", "Activity", "Mood", etc.).
+## 🏗️ Architecture & Tech Stack
 
-3.  **Design and UI/UX:**
-    *   Overall application design improvement.
-    *   Potential addition of emojis and images to enhance visual appeal.
+*   **Framework:** Flutter
+*   **State Management:** GetX
+*   **Database:** SQLite (via `sqflite` package)
+*   **Architecture:** Layered Architecture (Presentation, Domain, Data)
+    *   **Presentation:** UI Screens and GetX Controllers interacting with the Domain layer.
+    *   **Domain:** Business logic, Use Cases (structure defined), Controllers.
+    *   **Data:** Repositories (interfaces & implementations), DAOs (Data Access Objects), Database Helper (managing DB connection, creation, and **migrations**).
+*   **Sharing:** `share_plus`
+*   **Date Formatting:** `intl`
+*   **File Paths:** `path_provider`
 
-**Functionality planned for later Post-MVP stages:**
+##  roadmap
 
-*   Calendar view for data browsing.
-*   Reminders to fill in data.
-*   Data analytics and visualization within the application.
-*   Data import from other formats (JSON, Google Sheets).
-*   Cloud synchronization and data backup.
-*   Advanced design and themes.
-*   Future potential integration of simple analytical functions based on neural networks.
+### ⏳ Next Steps (Immediate Focus: Enhancing Data Entry)
 
-## Installation and Setup
+*   **Improved Data Entry Screen UI/UX:** Make the data input process more intuitive and visually appealing.
+*   **Dynamic Input Widgets:** Display appropriate input fields based on the parameter's data type:
+    *   `Number`: Numeric input field (potentially with stepper +/- buttons).
+    *   `Text`: Standard text input field.
+    *   `Rating`: Interactive rating scale (e.g., 1-10 slider, tappable stars/emojis).
+    *   `Yes/No`: Switch or Toggle Buttons.
+    *   `Time`: Time picker dialog.
+    *   `Date`: Date picker dialog.
+*   **(Optional)** **Parameter Presets:** Allow users to add predefined sets of common parameters (e.g., "Wellness Basics", "Fitness Tracking") for a quicker start.
 
-1.  Ensure you have [Flutter](https://flutter.dev/) installed.
+### 📅 Future Plans (Longer Term)
+
+*   **Calendar View:** Navigate and view data entries visually on a calendar.
+*   **Reminders:** Set reminders to log daily data.
+*   **In-App Analytics & Visualization:** Basic charts and trends directly within the app.
+*   **Improved Design:** Overall UI polish, potential theming.
+*   **Data Import:** Import data from CSV or other formats.
+*   **Cloud Sync & Backup (Optional):** Securely back up and sync data across devices.
+*   **Advanced Features:** Voice input, deeper analytics, potential integrations.
+
+## ⚙️ Installation and Setup
+
+1.  Ensure you have [Flutter](https://flutter.dev/docs/get-started/install) installed (check with `flutter doctor`).
 2.  Clone the repository:
     ```bash
     git clone [Your Repository URL]
@@ -71,9 +81,18 @@
     ```bash
     flutter pub get
     ```
-5.  Run the application:
+5.  Run the application on an emulator or connected device:
     ```bash
     flutter run
     ```
 
-**"BioLog" application is developed using Flutter and follows a layered architecture (Presentation, Domain, Data Layer) to ensure scalability and maintainability.**
+## 🙌 Contributing
+
+Contributions, issues, and feature requests are welcome! Feel free to check [issues page](<!-- TODO: Link to your issues page if public -->).
+
+## 📄 License
+
+<!-- TODO: Choose and add a license (e.g., MIT, Apache 2.0). Create a LICENSE file. -->
+This project is licensed under the [Your License Name] License - see the `LICENSE` file for details.
+
+---
