@@ -71,7 +71,7 @@ The core functionalities (parameter management, basic data entry, local storage,
 1.  Ensure you have [Flutter](https://flutter.dev/docs/get-started/install) installed (check with `flutter doctor`).
 2.  Clone the repository:
     ```bash
-    git clone [Your Repository URL]
+    git clone https://github.com/elsquaddie/BioLogger.git
     ```
 3.  Navigate to the project directory:
     ```bash
