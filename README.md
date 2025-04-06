@@ -85,14 +85,3 @@ The core functionalities (parameter management, basic data entry, local storage,
     ```bash
     flutter run
     ```
-
-## 🙌 Contributing
-
-Contributions, issues, and feature requests are welcome! Feel free to check [issues page](<!-- TODO: Link to your issues page if public -->).
-
-## 📄 License
-
-<!-- TODO: Choose and add a license (e.g., MIT, Apache 2.0). Create a LICENSE file. -->
-This project is licensed under the [Your License Name] License - see the `LICENSE` file for details.
-
----
