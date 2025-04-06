@@ -11,26 +11,38 @@ import 'domain/controllers/parameter_controller.dart';
 import 'domain/controllers/data_entry_controller.dart';
 
 void main() {
-  // Регистрируем зависимости
-  // Repositories
-  Get.put<DailyRecordRepository>(DailyRecordRepositoryImpl());
-  Get.put<ParameterRepository>(ParameterRepositoryImpl());
-
-  // Use Cases
-  Get.put(ExportDataUseCase(
-    Get.find<DailyRecordRepository>(),
-    Get.find<ParameterRepository>(),
-  ));
-
-  // Controllers
-  Get.put(DailyRecordController(
-    Get.find<DailyRecordRepository>(),
-    Get.find<ExportDataUseCase>(),
-  ));
-  Get.put(ParameterController());
-  Get.put(DataEntryController());
-
+  // Инициализируем биндинги перед запуском приложения
+  AppBindings().dependencies();
   runApp(const MyApp());
+}
+
+class AppBindings extends Bindings {
+  @override
+  void dependencies() {
+    // Repositories
+    Get.lazyPut<DailyRecordRepository>(() => DailyRecordRepositoryImpl(), fenix: true);
+    Get.lazyPut<ParameterRepository>(() => ParameterRepositoryImpl(), fenix: true);
+
+    // Use Cases
+    Get.lazyPut<ExportDataUseCase>(
+      () => ExportDataUseCase(
+        Get.find<DailyRecordRepository>(), 
+        Get.find<ParameterRepository>(),
+      ),
+      fenix: true,
+    );
+
+    // Controllers
+    Get.lazyPut<DailyRecordController>(
+      () => DailyRecordController(
+        Get.find<DailyRecordRepository>(),
+        Get.find<ExportDataUseCase>(),
+      ),
+      fenix: true,
+    );
+    Get.lazyPut(() => ParameterController(Get.find<ParameterRepository>()), fenix: true);
+    Get.lazyPut(() => DataEntryController(), fenix: true);
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -44,6 +56,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
+      initialBinding: AppBindings(), // Добавляем биндинги в GetMaterialApp
       home: HomeScreen(),
     );
   }

@@ -8,7 +8,7 @@ class ParameterDao {
 
   // Метод для добавления нового параметра в базу данных
   Future<int> insertParameter(Parameter parameter) async {
-    Database? db = await _databaseHelper.database; // Получаем доступ к базе данных
+    Database db = await _databaseHelper.database; // Получаем доступ к базе данных
     Map<String, dynamic> values = parameter.toJson(); // Преобразуем Parameter в Map для вставки в БД
 
     // Явно указываем порядок колонок и ключи values
@@ -25,16 +25,17 @@ class ParameterDao {
       explicitValues['scale_options'] = jsonEncode(explicitValues['scale_options']);
     }
 
-    return await db!.insert(
+    return await db.insert(
       DatabaseHelper.tableParameters,
       explicitValues,
+      conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
 
   // Метод для получения параметра по ID
   Future<Parameter?> getParameter(int id) async {
-    Database? db = await _databaseHelper.database;
-    List<Map> maps = await db!.query(
+    Database db = await _databaseHelper.database;
+    List<Map<String, dynamic>> maps = await db.query(
       DatabaseHelper.tableParameters,
       columns: [
         DatabaseHelper.columnParameterId,
@@ -93,14 +94,15 @@ class ParameterDao {
 
   // Метод для обновления параметра
   Future<int> updateParameter(Parameter parameter) async {
-    Database? db = await _databaseHelper.database;
+    Database db = await _databaseHelper.database;
     Map<String, dynamic> values = parameter.toJson();
      // Сериализуем scaleOptions в JSON строку, если они есть
     if (values['scaleOptions'] != null) {
       values['scaleOptions'] = jsonEncode(values['scaleOptions']);
     }
 
-    return await db!.update(
+    print("ParameterDao: Updating parameter ID ${parameter.id} with values: $values");
+    return await db.update(
       DatabaseHelper.tableParameters,
       values,
       where: '${DatabaseHelper.columnParameterId} = ?',

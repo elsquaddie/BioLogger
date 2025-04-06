@@ -3,7 +3,7 @@ import 'package:path/path.dart';
 
 class DatabaseHelper {
   static const databaseName = "biolog_database.db";
-  static const databaseVersion = 2;
+  static const databaseVersion = 3;
 
   // Имена таблиц
   static const tableParameters = 'parameters';
@@ -26,19 +26,23 @@ class DatabaseHelper {
 
   static Database? _database;
 
-  Future<Database?> get database async {
-    if (_database != null) return _database; // Если база данных уже существует, возвращаем ее
-    _database = await _initDatabase(); // Инициализируем, если нет
-    return _database;
+  Future<Database> get database async {
+    if (_database != null) return _database!;
+    _database = await _initDatabase();
+    return _database!;
   }
 
-Future<Database> _initDatabase() async {
-  String path = join(await getDatabasesPath(), databaseName); // Путь к базе данных
-  print("Database path: $path"); // <--- ДОБАВЬ ЭТУ СТРОКУ: Логирование пути
-  return await openDatabase(path,
+  Future<Database> _initDatabase() async {
+    String path = join(await getDatabasesPath(), databaseName); // Путь к базе данных
+    print("Database path: $path"); // <--- ДОБАВЬ ЭТУ СТРОКУ: Логирование пути
+    print("Requesting database version: $databaseVersion");
+    return await openDatabase(
+      path,
       version: databaseVersion,
-      onCreate: _onCreate);
-}
+      onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
+    );
+  }
 
   Future<void> _onCreate(Database db, int version) async {
     // Создание таблицы parameters
@@ -60,5 +64,26 @@ Future<Database> _initDatabase() async {
         dataValues TEXT NOT NULL
       )
     ''');
+  }
+
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    print("Upgrading database from version $oldVersion to $newVersion");
+    if (oldVersion < 3) {
+      print("Applying migration for version 3: Adding column $columnParameterScaleOptions if not exists...");
+      try {
+        await db.execute('''
+          ALTER TABLE $tableParameters ADD COLUMN $columnParameterScaleOptions TEXT
+        ''');
+        print("Column $columnParameterScaleOptions added or already exists.");
+      } catch (e) {
+        print("Error trying to add column $columnParameterScaleOptions: $e");
+        var columns = await db.rawQuery('PRAGMA table_info($tableParameters)');
+        bool exists = columns.any((col) => col['name'] == columnParameterScaleOptions);
+        print("Column $columnParameterScaleOptions ${exists ? 'exists' : 'does not exist'}");
+        if (!exists) {
+          print("Failed to add column $columnParameterScaleOptions!");
+        }
+      }
+    }
   }
 }

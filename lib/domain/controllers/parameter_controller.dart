@@ -1,12 +1,15 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../models/parameter.dart';
 import '../../data/repositories/parameter_repository.dart';
 import '../../data/repositories/parameter_repository_impl.dart';
 
 class ParameterController extends GetxController {
-  final ParameterRepository _parameterRepository = ParameterRepositoryImpl(); // Используем реализацию репозитория
-  final parameters = <Parameter>[].obs; // Observable список параметров для GetX
-  final isParametersLoaded = false.obs; // Add an observable flag
+  final ParameterRepository _parameterRepository;
+  ParameterController(this._parameterRepository);
+
+  final parameters = <Parameter>[].obs;
+  final isParametersLoaded = false.obs;
 
   @override
   void onInit() {
@@ -32,8 +35,14 @@ class ParameterController extends GetxController {
 
     } catch (e) {
       print("ParameterController: loadParameters() - Error loading parameters: $e");
-      // TODO: Обработка ошибок
-      print("Error loading parameters: $e");
+      Get.snackbar(
+        'Ошибка загрузки',
+        'Не удалось загрузить параметры: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      rethrow;
     }
     print("ParameterController: loadParameters() - Finished loading parameters.");
   }
@@ -42,12 +51,19 @@ class ParameterController extends GetxController {
     try {
       final id = await _parameterRepository.insertParameter(parameter);
       if (id != 0) {
-        Parameter newParameter = parameter.copyWith(id: id); // Создаем новый Parameter с ID, который вернула БД
-        parameters.add(newParameter); // Добавляем новый параметр в observable список
+        Parameter newParameter = parameter.copyWith(id: id);
+        parameters.add(newParameter);
       }
     } catch (e) {
-      // TODO: Обработка ошибок
       print("Error creating parameter: $e");
+      Get.snackbar(
+        'Ошибка создания',
+        'Не удалось создать параметр: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      rethrow;
     }
   }
 
@@ -56,22 +72,39 @@ class ParameterController extends GetxController {
       await _parameterRepository.updateParameter(parameter);
       final index = parameters.indexWhere((p) => p.id == parameter.id);
       if (index != -1) {
-        parameters[index] = parameter; // Обновляем параметр в observable списке
-        parameters.refresh(); // Явно уведомляем GetX об изменении списка (если нужно)
+        parameters[index] = parameter;
+        parameters.refresh();
       }
     } catch (e) {
-      // TODO: Обработка ошибок
       print("Error updating parameter: $e");
+      Get.snackbar(
+        'Ошибка обновления',
+        'Не удалось обновить параметр: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      rethrow;
     }
   }
 
   Future<void> deleteParameter(int id) async {
     try {
+      final index = parameters.indexWhere((p) => p.id == id);
+      if (index == -1) return;
+
       await _parameterRepository.deleteParameter(id);
-      parameters.removeWhere((p) => p.id == id); // Удаляем параметр из observable списка
+      parameters.removeWhere((p) => p.id == id);
     } catch (e) {
-      // TODO: Обработка ошибок
       print("Error deleting parameter: $e");
+      Get.snackbar(
+        'Ошибка удаления',
+        'Не удалось удалить параметр: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      rethrow;
     }
   }
 }

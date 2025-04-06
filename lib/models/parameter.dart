@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 /// Represents a parameter that can be tracked in the bio logging system
 class Parameter {
   /// Unique identifier for the parameter, null when creating new parameter
@@ -31,20 +33,32 @@ class Parameter {
       'name': name,
       'data_type': dataType, // <--- ИЗМЕНЕНО: ключ теперь 'data_type' (snake_case)
       'unit': unit,
-      'scaleOptions': scaleOptions,
+      'scale_options': scaleOptions == null ? null : jsonEncode(scaleOptions),
     };
   }
 
   /// Creates a Parameter instance from JSON data
   factory Parameter.fromJson(Map<String, dynamic> json) {
+    List<String>? decodedScaleOptions;
+    final scaleOptionsJson = json['scale_options'];
+
+    if (scaleOptionsJson != null && scaleOptionsJson is String && scaleOptionsJson.isNotEmpty) {
+      try {
+        final decodedList = jsonDecode(scaleOptionsJson);
+        if (decodedList is List) {
+          decodedScaleOptions = List<String>.from(decodedList.map((item) => item.toString()));
+        }
+      } catch (e) {
+        print("Ошибка декодирования scale_options JSON: $e, JSON: $scaleOptionsJson");
+      }
+    }
+
     return Parameter(
       id: json['id'] as int?,
       name: json['name'] as String,
-      dataType: json['data_type'] as String? ?? '', // Changed from 'dataType' to 'data_type' to match DB column
-      unit: json['unit'] as String? ?? '',
-      scaleOptions: json['scale_options'] != null  // Changed from 'scaleOptions' to 'scale_options'
-          ? List<String>.from(json['scale_options'])
-          : null,
+      dataType: json['data_type'] as String? ?? '',
+      unit: json['unit'] as String?,
+      scaleOptions: decodedScaleOptions,
     );
   }
 
