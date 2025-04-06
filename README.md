@@ -1,4 +1,4 @@
-# BioLog 🌿
+# BioLogger 🌿
 
 **A Flutter application for easily tracking personal metrics, life quality data, and exporting it for analysis.**
 
