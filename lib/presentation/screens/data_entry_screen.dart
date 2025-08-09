@@ -156,12 +156,12 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
                         : null,
                     child: const Text("Назад"),
                   ),
-                  ElevatedButton(
+                  Obx(() => ElevatedButton(
                     onPressed: () {
                       _dataEntryController.nextParameter();
                     },
-                    child: const Text("Далее"),
-                  ),
+                    child: Text(_dataEntryController.isLastParameter ? "Сохранить" : "Далее"),
+                  )),
                 ],
               ),
             ],

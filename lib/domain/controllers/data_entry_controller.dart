@@ -58,6 +58,9 @@ class DataEntryController extends GetxController {
           ? parametersForEntry[currentParameterIndex.value]
           : null;
 
+  bool get isLastParameter =>
+      parametersForEntry.isNotEmpty && currentParameterIndex.value == parametersForEntry.length - 1;
+
   void updateEnteredValue(String parameterId, dynamic value) {
     enteredValues[parameterId] = value;
   }
@@ -66,8 +69,8 @@ class DataEntryController extends GetxController {
     if (currentParameterIndex.value < parametersForEntry.length - 1) {
       currentParameterIndex.value++;
     } else {
-      // TODO:  Завершение ввода всех параметров, показ экрана "Поздравляем!" или что-то еще
-      print("Заполнены все параметры!");
+      // На последнем параметре - сохраняем данные
+      saveDailyRecord();
     }
   }
 
