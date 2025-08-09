@@ -20,21 +20,16 @@ class ParameterController extends GetxController {
   }
 
   Future<void> loadParameters() async {
-    print("ParameterController: loadParameters() - Start loading parameters from database...");
+    // Loading parameters from database
 
     try {
       final loadedParameters = await _parameterRepository.getAllParameters();
       parameters.assignAll(loadedParameters);
 
-      print("ParameterController: loadParameters() - Parameters loaded successfully. Count: ${loadedParameters.length}");
-      if (loadedParameters.isNotEmpty) {
-        print("ParameterController: loadParameters() - Loaded parameters: ${loadedParameters.map((p) => p.name).toList()}");
-      } else {
-        print("ParameterController: loadParameters() - No parameters found in database.");
-      }
+      // Parameters loaded successfully: ${loadedParameters.length} items
 
     } catch (e) {
-      print("ParameterController: loadParameters() - Error loading parameters: $e");
+      // Error loading parameters: $e
       Get.snackbar(
         'Ошибка загрузки',
         'Не удалось загрузить параметры: $e',
@@ -44,7 +39,7 @@ class ParameterController extends GetxController {
       );
       rethrow;
     }
-    print("ParameterController: loadParameters() - Finished loading parameters.");
+    // Finished loading parameters
   }
 
   Future<void> createParameter(Parameter parameter) async {

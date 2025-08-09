@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'presentation/screens/home_screen.dart';
+import 'presentation/theme/app_theme.dart';
 import 'data/repositories/daily_record_repository.dart';
 import 'data/repositories/daily_record_repository_impl.dart';
 import 'data/repositories/parameter_repository.dart';
@@ -51,13 +52,14 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      title: 'BioLog App',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      initialBinding: AppBindings(), // Добавляем биндинги в GetMaterialApp
+      title: 'BioLogger - Трекер здоровья',
+      theme: AppTheme.lightTheme,
+      debugShowCheckedModeBanner: false,
+      initialBinding: AppBindings(),
       home: HomeScreen(),
+      // Настройка анимаций переходов по умолчанию
+      defaultTransition: Transition.fadeIn,
+      transitionDuration: const Duration(milliseconds: 300),
     );
   }
 }

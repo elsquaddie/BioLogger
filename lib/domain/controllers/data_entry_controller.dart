@@ -11,6 +11,7 @@ class DataEntryController extends GetxController {
 
   final parametersForEntry = <Parameter>[].obs;
   final enteredValues = <String, dynamic>{}.obs;
+  final enteredComments = <String, String>{}.obs;
   final currentParameterIndex = 0.obs;
   Rx<DateTime> selectedDate = DateTime.now().obs;
 
@@ -37,12 +38,19 @@ class DataEntryController extends GetxController {
     parametersForEntry.assignAll(allParameters);
 
     enteredValues.clear();
+    enteredComments.clear();
     for (var parameter in parametersForEntry) {
       final parameterId = parameter.id.toString();
       if (dailyRecord != null && dailyRecord.dataValues.containsKey(parameterId)) {
         enteredValues[parameterId] = dailyRecord.dataValues[parameterId];
       } else {
         enteredValues[parameterId] = '';
+      }
+      
+      if (dailyRecord != null && dailyRecord.comments.containsKey(parameterId)) {
+        enteredComments[parameterId] = dailyRecord.comments[parameterId]!;
+      } else {
+        enteredComments[parameterId] = '';
       }
     }
     if (parametersForEntry.isNotEmpty) {
@@ -65,6 +73,10 @@ class DataEntryController extends GetxController {
     enteredValues[parameterId] = value;
   }
 
+  void updateEnteredComment(String parameterId, String comment) {
+    enteredComments[parameterId] = comment;
+  }
+
   void nextParameter() {
     if (currentParameterIndex.value < parametersForEntry.length - 1) {
       currentParameterIndex.value++;
@@ -78,18 +90,27 @@ class DataEntryController extends GetxController {
     if (currentParameterIndex.value > 0) {
       currentParameterIndex.value--;
     } else {
-      print("Already at the first parameter.");
+      // Already at first parameter
     }
   }
 
   Future<void> saveDailyRecord() async {
-    print("Сохранение ежедневной записи...");
+    // Saving daily record
     
     final dataValuesMap = <String, dynamic>{};
+    final commentsMap = <String, String>{};
+    
     for (var parameter in parametersForEntry) {
-      final value = enteredValues[parameter.id.toString()];
+      final parameterId = parameter.id.toString();
+      final value = enteredValues[parameterId];
+      final comment = enteredComments[parameterId];
+      
       if (value != null && value.toString().isNotEmpty) {
-        dataValuesMap[parameter.id.toString()] = value;
+        dataValuesMap[parameterId] = value;
+      }
+      
+      if (comment != null && comment.isNotEmpty) {
+        commentsMap[parameterId] = comment;
       }
     }
 
@@ -97,18 +118,19 @@ class DataEntryController extends GetxController {
     final dailyRecord = DailyRecord(
       date: normalizedDate,
       dataValues: dataValuesMap,
+      comments: commentsMap,
     );
 
     try {
       await _dailyRecordRepository.insertDailyRecord(dailyRecord);
-      print("Ежедневная запись успешно сохранена!");
+      // Daily record saved successfully
       Get.snackbar(
         'Успех',
         'Данные сохранены за ${DateFormat('dd.MM.yyyy').format(selectedDate.value)}',
         snackPosition: SnackPosition.BOTTOM,
       );
     } catch (e) {
-      print("Ошибка сохранения ежедневной записи: $e");
+      // Error saving daily record: $e
       Get.snackbar(
         'Ошибка',
         'Не удалось сохранить данные',
@@ -118,17 +140,20 @@ class DataEntryController extends GetxController {
   }
 
   Future<DailyRecord?> loadDailyRecordForDate(DateTime date) async {
-    print("Загрузка ежедневной записи за дату: $date");
+    // Loading daily record for date: $date
     final dailyRecord = await _dailyRecordRepository.getDailyRecordByDate(date);
 
     if (dailyRecord != null) {
-      print("Запись найдена! Data from database: ${dailyRecord.dataValues}");
+      // Record found with data and comments
       enteredValues.assignAll(dailyRecord.dataValues.map((key, value) => MapEntry(key, value)));
+      enteredComments.assignAll(dailyRecord.comments);
     } else {
-      print("Запись не найдена");
+      // Record not found
       enteredValues.clear();
+      enteredComments.clear();
       for (var parameter in parametersForEntry) {
         enteredValues[parameter.id.toString()] = '';
+        enteredComments[parameter.id.toString()] = '';
       }
     }
     return dailyRecord;

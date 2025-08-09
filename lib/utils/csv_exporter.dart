@@ -18,9 +18,14 @@ class CsvExporter {
     StringBuffer csvData = StringBuffer(); // Используем StringBuffer для эффективности
     final dateFormat = DateFormat('yyyy-MM-dd');
 
-    // Add headers
-    csvData.write('Дата,'); // Используем write вместо +=
-    csvData.writeln(parameters.map((p) => _escapeCsvValue(p.name)).join(',')); // Экранируем заголовки на всякий случай
+    // Add headers - include parameter names and their comment columns
+    csvData.write('Дата,');
+    final headers = <String>[];
+    for (var parameter in parameters) {
+      headers.add(_escapeCsvValue(parameter.name));
+      headers.add(_escapeCsvValue('${parameter.name} (комментарий)'));
+    }
+    csvData.writeln(headers.join(','));
 
     // Process each record
     for (var record in dailyRecords) {
@@ -28,30 +33,41 @@ class CsvExporter {
         // Add date
         csvData.write('${dateFormat.format(record.date)},');
 
-        // Process values for each parameter
-        final values = parameters.map((parameter) {
+        // Process values and comments for each parameter
+        final valuesAndComments = <String>[];
+        for (var parameter in parameters) {
           try {
             final rawValues = record.dataValues;
-            // Упрощенная проверка и получение значения
+            final rawComments = record.comments;
+            
+            // Get value
             final value = (rawValues is Map<String, dynamic>)
                 ? rawValues[parameter.id.toString()] ?? ''
                 : '';
-            return _escapeCsvValue(value.toString()); // Экранируем значения
+            valuesAndComments.add(_escapeCsvValue(value.toString()));
+            
+            // Get comment
+            final comment = (rawComments is Map<String, String>)
+                ? rawComments[parameter.id.toString()] ?? ''
+                : '';
+            valuesAndComments.add(_escapeCsvValue(comment));
           } catch (e) {
             if (kDebugMode) {
               print('Error processing parameter ${parameter.id} for record ${record.date}: $e');
             }
-            return ''; // Возвращаем пустое значение в случае ошибки для данного параметра
+            valuesAndComments.add(''); // Empty value
+            valuesAndComments.add(''); // Empty comment
           }
-        }).join(',');
+        }
+        final values = valuesAndComments.join(',');
 
         csvData.writeln(values); // Используем writeln для добавления \n
       } catch (e) {
         if (kDebugMode) {
           print('Error processing record for date ${record.date}: $e');
         }
-        // Add empty values for this record if the whole record processing fails
-        csvData.writeln(List.filled(parameters.length, '').join(','));
+        // Add empty values and comments for this record if the whole record processing fails
+        csvData.writeln(List.filled(parameters.length * 2, '').join(','));
       }
     }
     if (kDebugMode) {

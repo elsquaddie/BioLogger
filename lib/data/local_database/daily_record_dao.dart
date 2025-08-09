@@ -23,7 +23,9 @@ await db!.delete(
 Map<String, dynamic> values = dailyRecord.toJson();
 print("DailyRecordDao: Saving new record for date: $dateString");
 print("DailyRecordDao: Values before JSON encode: ${values['dataValues']}");
+print("DailyRecordDao: Comments before JSON encode: ${values['comments']}");
 values['dataValues'] = jsonEncode(values['dataValues']);
+values['comments'] = jsonEncode(values['comments']);
 
 return await db.insert(
   DatabaseHelper.tableDailyRecords,
@@ -40,6 +42,7 @@ columns: [
 DatabaseHelper.columnDailyRecordId,
 DatabaseHelper.columnDailyRecordDate,
 DatabaseHelper.columnDailyRecordDataValues,
+DatabaseHelper.columnDailyRecordComments,
 ],
 where: '${DatabaseHelper.columnDailyRecordId} = ?',
 whereArgs: [id],
@@ -49,6 +52,12 @@ if (maps.isNotEmpty) {
   Map<String, dynamic> recordMap = Map<String, dynamic>.from(maps.first);
   // Десериализуем dataValues из JSON строки обратно в Map<String, dynamic>
   recordMap[DatabaseHelper.columnDailyRecordDataValues] = jsonDecode(recordMap[DatabaseHelper.columnDailyRecordDataValues]);
+  // Десериализуем comments из JSON строки обратно в Map<String, String>
+  if (recordMap[DatabaseHelper.columnDailyRecordComments] != null && recordMap[DatabaseHelper.columnDailyRecordComments].isNotEmpty) {
+    recordMap[DatabaseHelper.columnDailyRecordComments] = jsonDecode(recordMap[DatabaseHelper.columnDailyRecordComments]);
+  } else {
+    recordMap[DatabaseHelper.columnDailyRecordComments] = <String, String>{};
+  }
   return DailyRecord.fromJson(recordMap);
 }
 return null;
@@ -75,6 +84,12 @@ if (maps.isNotEmpty) {
   Map<String, dynamic> recordMap = Map<String, dynamic>.from(maps.first);
   recordMap[DatabaseHelper.columnDailyRecordDataValues] = 
       jsonDecode(recordMap[DatabaseHelper.columnDailyRecordDataValues]);
+  // Десериализуем comments из JSON строки обратно в Map<String, String>
+  if (recordMap[DatabaseHelper.columnDailyRecordComments] != null && recordMap[DatabaseHelper.columnDailyRecordComments].isNotEmpty) {
+    recordMap[DatabaseHelper.columnDailyRecordComments] = jsonDecode(recordMap[DatabaseHelper.columnDailyRecordComments]);
+  } else {
+    recordMap[DatabaseHelper.columnDailyRecordComments] = <String, String>{};
+  }
   return DailyRecord.fromJson(recordMap);
 }
 return null;
@@ -90,6 +105,12 @@ if (maps.isNotEmpty) {
      Map<String, dynamic> recordMap = Map<String, dynamic>.from(map);
     // Десериализуем dataValues из JSON строки обратно в Map<String, dynamic>
     recordMap[DatabaseHelper.columnDailyRecordDataValues] = jsonDecode(recordMap[DatabaseHelper.columnDailyRecordDataValues]);
+    // Десериализуем comments из JSON строки обратно в Map<String, String>
+    if (recordMap[DatabaseHelper.columnDailyRecordComments] != null && recordMap[DatabaseHelper.columnDailyRecordComments].isNotEmpty) {
+      recordMap[DatabaseHelper.columnDailyRecordComments] = jsonDecode(recordMap[DatabaseHelper.columnDailyRecordComments]);
+    } else {
+      recordMap[DatabaseHelper.columnDailyRecordComments] = <String, String>{};
+    }
     return DailyRecord.fromJson(recordMap);
   }).toList();
 }
@@ -101,8 +122,9 @@ Future<int> updateDailyRecord(DailyRecord dailyRecord) async {
 Database? db = await _databaseHelper.database;
 Map<String, dynamic> values = dailyRecord.toJson();
 
-// Сериализуем dataValues в JSON строку
+// Сериализуем dataValues и comments в JSON строку
 values['dataValues'] = jsonEncode(values['dataValues']);
+values['comments'] = jsonEncode(values['comments']);
 
 return await db!.update(
   DatabaseHelper.tableDailyRecords,

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../models/parameter.dart';
 import '../../domain/controllers/parameter_controller.dart';
+import '../theme/app_theme.dart';
 
 class ParameterEditScreen extends StatefulWidget {
   final Parameter parameter; // Принимаем параметр для редактирования
@@ -41,62 +42,113 @@ class _ParameterEditScreenState extends State<ParameterEditScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return Scaffold(
+      backgroundColor: theme.colorScheme.background,
       appBar: AppBar(
         title: const Text('Редактировать параметр'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: SingleChildScrollView(
+        padding: AppTheme.pagePadding,
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              TextFormField(
-                controller: _nameController, // Используем контроллер
-                decoration: const InputDecoration(labelText: 'Название параметра'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Пожалуйста, введите название параметра';
-                  }
-                  return null;
-                },
-                // onSaved не нужен при использовании контроллера
+              Card(
+                child: Padding(
+                  padding: AppTheme.cardPadding,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.edit,
+                            color: theme.colorScheme.primary,
+                            size: 24,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Редактирование параметра',
+                            style: theme.textTheme.titleLarge,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      TextFormField(
+                        controller: _nameController,
+                        decoration: InputDecoration(
+                          labelText: 'Название параметра',
+                          hintText: 'Например: Вес, Настроение, Сон',
+                          prefixIcon: const Icon(Icons.label_outline),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Пожалуйста, введите название параметра';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      DropdownButtonFormField<String>(
+                        decoration: InputDecoration(
+                          labelText: 'Тип данных',
+                          hintText: 'Выберите тип данных для параметра',
+                          prefixIcon: const Icon(Icons.category_outlined),
+                        ),
+                        value: _dataType,
+                        items: <String>['Число', 'Текст', 'Оценка', 'Да/Нет', 'Время', 'Дата']
+                            .map<DropdownMenuItem<String>>((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Row(
+                              children: [
+                                Icon(
+                                  _getTypeIcon(value),
+                                  size: 20,
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                                const SizedBox(width: 12),
+                                Text(value),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Пожалуйста, выберите тип данных';
+                          }
+                          return null;
+                        },
+                        onChanged: (String? newValue) {
+                          setState(() {
+                            _dataType = newValue;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      TextFormField(
+                        controller: _unitController,
+                        decoration: InputDecoration(
+                          labelText: 'Единица измерения (опционально)',
+                          hintText: 'кг, см, баллы, часы и т.д.',
+                          prefixIcon: const Icon(Icons.straighten),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              const SizedBox(height: 20),
-              DropdownButtonFormField<String>(
-                decoration: const InputDecoration(labelText: 'Тип данных'),
-                value: _dataType, // Предзаполненное значение
-                items: <String>['Число', 'Текст', 'Оценка', 'Да/Нет', 'Время', 'Дата']
-                    .map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Пожалуйста, выберите тип данных';
-                  }
-                  return null;
-                },
-                onChanged: (String? newValue) {
-                  setState(() {
-                    _dataType = newValue;
-                  });
-                },
-                // onSaved не нужен, значение уже в _dataType
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: _unitController, // Используем контроллер
-                decoration: const InputDecoration(labelText: 'Единица измерения (опционально)'),
-                // onSaved не нужен
-              ),
-              const SizedBox(height: 30),
-              ElevatedButton(
-                onPressed: _updateParameter, // Вызываем метод обновления
-                child: const Text('Сохранить изменения'),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _updateParameter,
+                  icon: const Icon(Icons.save),
+                  label: const Text('Сохранить изменения'),
+                ),
               ),
             ],
           ),
@@ -106,6 +158,7 @@ class _ParameterEditScreenState extends State<ParameterEditScreen> {
   }
 
   void _updateParameter() async {
+    final theme = Theme.of(context);
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save(); // Хотя save здесь не обязателен с контроллерами
 
@@ -132,11 +185,33 @@ class _ParameterEditScreenState extends State<ParameterEditScreen> {
         );
 
       } catch (e) {
-         // Показываем ошибку здесь же, если не удалось обновить
          ScaffoldMessenger.of(context).showSnackBar(
-           SnackBar(content: Text('Ошибка при обновлении: $e')),
+           SnackBar(
+             content: Text('Ошибка при обновлении: $e'),
+             backgroundColor: theme.colorScheme.error,
+             behavior: SnackBarBehavior.floating,
+           ),
          );
       }
+    }
+  }
+  
+  IconData _getTypeIcon(String dataType) {
+    switch (dataType.toLowerCase()) {
+      case 'число':
+        return Icons.numbers;
+      case 'текст':
+        return Icons.text_fields;
+      case 'оценка':
+        return Icons.star_rate;
+      case 'да/нет':
+        return Icons.check_box;
+      case 'время':
+        return Icons.access_time;
+      case 'дата':
+        return Icons.date_range;
+      default:
+        return Icons.tune;
     }
   }
 }

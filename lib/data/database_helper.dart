@@ -3,7 +3,7 @@ import 'package:path/path.dart';
 
 class DatabaseHelper {
   static const databaseName = "biolog_database.db";
-  static const databaseVersion = 3;
+  static const databaseVersion = 4;
 
   // Имена таблиц
   static const tableParameters = 'parameters';
@@ -20,6 +20,7 @@ class DatabaseHelper {
   static const columnDailyRecordId = 'id';
   static const columnDailyRecordDate = 'date';
   static const columnDailyRecordDataValues = 'dataValues'; // Changed from 'data_values' to 'dataValues'
+  static const columnDailyRecordComments = 'comments';
 
   DatabaseHelper._privateConstructor();
   static final DatabaseHelper instance = DatabaseHelper._privateConstructor();
@@ -61,13 +62,15 @@ class DatabaseHelper {
       CREATE TABLE daily_records (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         date TEXT NOT NULL,
-        dataValues TEXT NOT NULL
+        dataValues TEXT NOT NULL,
+        comments TEXT
       )
     ''');
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     print("Upgrading database from version $oldVersion to $newVersion");
+    
     if (oldVersion < 3) {
       print("Applying migration for version 3: Adding column $columnParameterScaleOptions if not exists...");
       try {
@@ -82,6 +85,24 @@ class DatabaseHelper {
         print("Column $columnParameterScaleOptions ${exists ? 'exists' : 'does not exist'}");
         if (!exists) {
           print("Failed to add column $columnParameterScaleOptions!");
+        }
+      }
+    }
+
+    if (oldVersion < 4) {
+      print("Applying migration for version 4: Adding column $columnDailyRecordComments...");
+      try {
+        await db.execute('''
+          ALTER TABLE $tableDailyRecords ADD COLUMN $columnDailyRecordComments TEXT
+        ''');
+        print("Column $columnDailyRecordComments added successfully.");
+      } catch (e) {
+        print("Error trying to add column $columnDailyRecordComments: $e");
+        var columns = await db.rawQuery('PRAGMA table_info($tableDailyRecords)');
+        bool exists = columns.any((col) => col['name'] == columnDailyRecordComments);
+        print("Column $columnDailyRecordComments ${exists ? 'exists' : 'does not exist'}");
+        if (!exists) {
+          print("Failed to add column $columnDailyRecordComments!");
         }
       }
     }
