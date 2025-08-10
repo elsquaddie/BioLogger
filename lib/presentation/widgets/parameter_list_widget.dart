@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../domain/controllers/parameter_controller.dart';
 import '../../models/parameter.dart';
-import 'parameter_create_screen.dart';
-import 'parameter_edit_screen.dart';
+import '../screens/parameter_create_screen.dart';
+import '../screens/parameter_edit_screen.dart';
 import '../theme/app_theme.dart';
 import '../animations/page_transitions.dart';
 import '../../utils/parameter_icons.dart';
 
-class ParameterListScreen extends StatelessWidget {
-  ParameterListScreen({Key? key}) : super(key: key);
+class ParameterListWidget extends StatelessWidget {
+  ParameterListWidget({Key? key}) : super(key: key);
 
   final ParameterController _parameterController = Get.find();
 
@@ -17,22 +17,7 @@ class ParameterListScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     
-    return Scaffold(
-      backgroundColor: theme.colorScheme.background,
-      appBar: AppBar(
-        title: const Text('Управление параметрами'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            tooltip: 'Создать параметр',
-            onPressed: () => Navigator.of(context).pushWithTransition(
-              const ParameterCreateScreen(),
-              transition: PageTransitionType.slideFromBottom,
-            ),
-          ),
-        ],
-      ),
-      body: Obx(() {
+    return Obx(() {
         if (!_parameterController.isParametersLoaded.value) {
           return Center(
             child: Column(
@@ -88,40 +73,48 @@ class ParameterListScreen extends StatelessWidget {
           );
         } else {
           // Единый список всех параметров
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 80), // Отступ для FAB
-            child: ReorderableListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _parameterController.parameters.length,
-              onReorder: (oldIndex, newIndex) async {
-                if (newIndex > oldIndex) {
-                  newIndex -= 1;
-                }
-                
-                final reorderedParams = List<Parameter>.from(_parameterController.parameters);
-                final parameter = reorderedParams.removeAt(oldIndex);
-                reorderedParams.insert(newIndex, parameter);
-                
-                // Обновляем sort_order для всех параметров
-                await _parameterController.reorderAllParameters(reorderedParams);
-              },
-              itemBuilder: (context, index) {
-                final parameter = _parameterController.parameters[index];
-                return _buildParameterTile(context, parameter, theme, index);
-              },
-            ),
+          return Stack(
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(bottom: 80), // Отступ для FAB
+                child: ReorderableListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _parameterController.parameters.length,
+                  onReorder: (oldIndex, newIndex) async {
+                    if (newIndex > oldIndex) {
+                      newIndex -= 1;
+                    }
+                    
+                    final reorderedParams = List<Parameter>.from(_parameterController.parameters);
+                    final parameter = reorderedParams.removeAt(oldIndex);
+                    reorderedParams.insert(newIndex, parameter);
+                    
+                    // Обновляем sort_order для всех параметров
+                    await _parameterController.reorderAllParameters(reorderedParams);
+                  },
+                  itemBuilder: (context, index) {
+                    final parameter = _parameterController.parameters[index];
+                    return _buildParameterTile(context, parameter, theme, index);
+                  },
+                ),
+              ),
+              // FloatingActionButton остается для функциональности
+              Positioned(
+                bottom: 16,
+                right: 16,
+                child: FloatingActionButton.extended(
+                  onPressed: () => Navigator.of(context).pushWithTransition(
+                    const ParameterCreateScreen(),
+                    transition: PageTransitionType.slideFromBottom,
+                  ),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Добавить'),
+                ),
+              ),
+            ],
           );
         }
-      }),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Navigator.of(context).pushWithTransition(
-          const ParameterCreateScreen(),
-          transition: PageTransitionType.slideFromBottom,
-        ),
-        icon: const Icon(Icons.add),
-        label: const Text('Добавить'),
-      ),
-    );
+      });
   }
 
   // Единый виджет для всех параметров

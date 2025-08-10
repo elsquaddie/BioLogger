@@ -74,11 +74,11 @@ class _ParameterCreateScreenState extends State<ParameterCreateScreen> {
                       DropdownButtonFormField<String>(
                         decoration: InputDecoration(
                           labelText: 'Тип данных',
-                          hintText: 'Выберите тип данных для параметра',
+                          hintText: 'Выберите тип',
                           prefixIcon: const Icon(Icons.category_outlined),
                         ),
                         value: _dataType,
-                        items: <String>['Число', 'Текст', 'Оценка', 'Да/Нет', 'Время', 'Дата']
+                        items: <String>['Число', 'Текст', 'Оценка', 'Да/Нет']
                             .map<DropdownMenuItem<String>>((String value) {
                           return DropdownMenuItem<String>(
                             value: value,

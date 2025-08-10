@@ -12,6 +12,7 @@ import 'domain/controllers/daily_record_controller.dart';
 import 'domain/controllers/parameter_controller.dart';
 import 'domain/controllers/data_entry_controller.dart';
 import 'domain/controllers/home_controller.dart';
+import 'domain/controllers/metrics_tab_controller.dart';
 import 'domain/services/preset_parameters_service.dart';
 
 void main() async {
@@ -62,6 +63,7 @@ class AppBindings extends Bindings {
       () => HomeController(Get.find<CalculateStreakUseCase>()),
       fenix: true,
     );
+    Get.lazyPut(() => MetricsTabController(), fenix: true);
     
     // Services
     Get.lazyPut<PresetParametersService>(

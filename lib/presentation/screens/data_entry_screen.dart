@@ -84,10 +84,15 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
         }
       });
       
-      // Автофокус для Number/Text полей
+      // Автофокус для Number/Text полей или убираем фокус для остальных
       if (currentParameter.dataType == 'Number' || currentParameter.dataType == 'Text') {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _valueFocusNode.requestFocus();
+        });
+      } else if (currentParameter.dataType == 'Rating' || currentParameter.dataType == 'YesNo') {
+        // Убираем клавиатуру для типов, которые не нуждаются в текстовом вводе
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          FocusScope.of(context).unfocus();
         });
       }
     }
@@ -525,7 +530,7 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
 
   /// Строит страницу для конкретного параметра
   Widget _buildParameterPage(Parameter parameter, BuildContext context, ThemeData theme) {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
