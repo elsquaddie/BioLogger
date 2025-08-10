@@ -1,300 +1,307 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'parameter_list_screen.dart';
-import 'data_entry_screen.dart';
-import '../../domain/controllers/daily_record_controller.dart';
-import '../../domain/controllers/parameter_controller.dart';
-import '../theme/app_theme.dart';
-import '../animations/page_transitions.dart';
+import '../../domain/controllers/home_controller.dart';
+import '../../domain/controllers/data_entry_controller.dart';
+import '../widgets/calendar_widget.dart';
+import 'main_navigation_screen.dart';
 
 class HomeScreen extends StatelessWidget {
-  final DailyRecordController dailyRecordController = Get.find();
-  final ParameterController parameterController = Get.find();
-
-  HomeScreen({super.key});
+  const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final HomeController controller = Get.find();
     final theme = Theme.of(context);
     
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
-      body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            // Современный SliverAppBar с градиентом
-            SliverAppBar(
-              expandedHeight: 200.0,
-              floating: false,
-              pinned: true,
-              elevation: 0,
-              backgroundColor: theme.colorScheme.primary,
-              flexibleSpace: FlexibleSpaceBar(
-                title: Text(
-                  'BioLogger',
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                background: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        theme.colorScheme.primary,
-                        theme.colorScheme.secondary,
-                      ],
-                    ),
-                  ),
-                  child: Center(
-                    child: Icon(
-                      Icons.health_and_safety,
-                      size: 80,
-                      color: Colors.white.withOpacity(0.3),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            
-            // Контент с карточками
-            SliverPadding(
-              padding: AppTheme.pagePadding,
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  const SizedBox(height: 24),
-                  
-                  // Приветственный текст
-                  Text(
-                    'Добро пожаловать!',
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.onBackground,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Отслеживайте свое здоровье и самочувствие каждый день',
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  
-                  // Статистика (заглушка)
-                  Card(
-                    child: Padding(
-                      padding: AppTheme.cardPadding,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.analytics_outlined,
-                                color: theme.colorScheme.primary,
-                                size: 24,
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                'Статистика',
-                                style: theme.textTheme.titleLarge,
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Obx(() {
-                            final paramCount = parameterController.parameters.length;
-                            return Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                _StatItem(
-                                  label: 'Параметров',
-                                  value: paramCount.toString(),
-                                  icon: Icons.settings,
-                                  theme: theme,
-                                ),
-                                _StatItem(
-                                  label: 'Сегодня',
-                                  value: '0', // TODO: добавить реальную статистику
-                                  icon: Icons.today,
-                                  theme: theme,
-                                ),
-                                _StatItem(
-                                  label: 'Всего дней',
-                                  value: '0', // TODO: добавить реальную статистику  
-                                  icon: Icons.calendar_month,
-                                  theme: theme,
-                                ),
-                              ],
-                            );
-                          }),
-                        ],
-                      ),
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 24),
-                  
-                  // Основные действия
-                  _ActionCard(
-                    title: 'Управление параметрами',
-                    subtitle: 'Создавайте и редактируйте параметры для отслеживания',
-                    icon: Icons.tune,
-                    theme: theme,
-                    onTap: () => Navigator.of(context).pushWithTransition(
-                      ParameterListScreen(),
-                      transition: PageTransitionType.slideAndFade,
-                    ),
+      backgroundColor: theme.colorScheme.surface,
+      appBar: AppBar(
+        title: const Text('BioLogger'),
+        centerTitle: true,
+        elevation: 0,
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: Colors.white,
+      ),
+      body: Column(
+        children: [
+          // Календарный виджет (без скроллинга)
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  // Календарный виджет
+                  Expanded(
+                    child: Obx(() => CalendarWidget(
+                      selectedDate: controller.selectedDate.value,
+                      filledDates: controller.filledDates.value,
+                      onDateSelected: controller.selectDate,
+                      onMonthChanged: controller.changeMonth,
+                      displayMonth: controller.currentMonth.value,
+                    )),
                   ),
                   
                   const SizedBox(height: 16),
                   
-                  _ActionCard(
-                    title: 'Ввод данных',
-                    subtitle: 'Записывайте значения параметров за день',
-                    icon: Icons.edit_note,
-                    theme: theme,
-                    onTap: () => Navigator.of(context).pushWithTransition(
-                      DataEntryScreen(),
-                      transition: PageTransitionType.slideAndFade,
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 16),
-                  
-                  _ActionCard(
-                    title: 'Экспорт данных',
-                    subtitle: 'Поделитесь своими данными или сохраните их',
-                    icon: Icons.share,
-                    theme: theme,
-                    onTap: () => dailyRecordController.exportDataAndShare(),
-                  ),
-                  
-                  const SizedBox(height: 32),
-                ]),
+                  // Компактная статистика дней подряд
+                  _buildCompactStats(controller, theme),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+          
+          // Динамическая кнопка внизу
+          _buildActionButton(context, controller, theme),
+        ],
       ),
     );
   }
-}
 
-class _StatItem extends StatelessWidget {
-  final String label;
-  final String value;
-  final IconData icon;
-  final ThemeData theme;
-
-  const _StatItem({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.theme,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.primaryContainer,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(
-            icon,
-            color: theme.colorScheme.onPrimaryContainer,
-            size: 24,
-          ),
+  /// Создает компактную статистику дней подряд
+  Widget _buildCompactStats(HomeController controller, ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      decoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(color: Colors.grey.shade300, width: 1),
         ),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: theme.textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.primary,
+      ),
+      child: Column(
+        children: [
+          // Заголовок
+          Text(
+            'Серии заполнений:',
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: theme.colorScheme.onSurface.withOpacity(0.8),
+            ),
           ),
-        ),
-        Text(
-          label,
-          style: theme.textTheme.bodySmall,
-        ),
-      ],
+          const SizedBox(height: 12),
+          
+          // Счетчики
+          Obx(() => Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              // Дни подряд
+              Column(
+                children: [
+                  Text(
+                    '${controller.consecutiveDays.value}',
+                    style: theme.textTheme.headlineLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF87A96B), // Sage green
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Дней подряд',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ],
+              ),
+              
+              // Дни в месяце
+              Column(
+                children: [
+                  Text(
+                    '${controller.monthlyFilledDays.value}',
+                    style: theme.textTheme.headlineLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF87A96B), // Sage green
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Дней в этом месяце',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          )),
+        ],
+      ),
     );
   }
-}
 
-class _ActionCard extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final ThemeData theme;
-  final VoidCallback onTap;
-
-  const _ActionCard({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.theme,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppTheme.cardBorderRadius),
+  /// Создает информацию о выбранной дате
+  Widget _buildSelectedDateInfo(HomeController controller, ThemeData theme) {
+    return Obx(() {
+      final selectedDate = controller.selectedDate.value;
+      final isToday = controller.isSelectedDateToday;
+      final isFilled = controller.isSelectedDateFilled;
+      final isInFuture = controller.isSelectedDateInFuture;
+      
+      String statusText;
+      Color statusColor;
+      IconData statusIcon;
+      
+      if (isInFuture) {
+        statusText = 'Будущий день';
+        statusColor = theme.colorScheme.onSurface.withOpacity(0.6);
+        statusIcon = Icons.schedule;
+      } else if (isFilled) {
+        statusText = 'День заполнен';
+        statusColor = Colors.green;
+        statusIcon = Icons.check_circle;
+      } else {
+        statusText = 'Данные не введены';
+        statusColor = theme.colorScheme.error;
+        statusIcon = Icons.radio_button_unchecked;
+      }
+      
+      return Card(
         child: Padding(
-          padding: AppTheme.cardPadding,
-          child: Row(
+          padding: const EdgeInsets.all(16),
+          child: Column(
             children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  icon,
-                  color: theme.colorScheme.onPrimaryContainer,
-                  size: 24,
+              Text(
+                'Выбранный день',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: theme.colorScheme.onSurface.withOpacity(0.7),
                 ),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: theme.textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
+              const SizedBox(height: 8),
+              
+              // Дата
+              Text(
+                _formatDate(selectedDate),
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
-              Icon(
-                Icons.arrow_forward_ios,
-                color: theme.colorScheme.onSurfaceVariant,
-                size: 18,
+              
+              if (isToday) ...[
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    'Сегодня',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+              
+              const SizedBox(height: 12),
+              
+              // Статус дня
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    statusIcon,
+                    color: statusColor,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    statusText,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: statusColor,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
         ),
+      );
+    });
+  }
+
+  /// Создает динамическую кнопку действия
+  Widget _buildActionButton(BuildContext context, HomeController controller, ThemeData theme) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        border: Border(
+          top: BorderSide(
+            color: theme.colorScheme.outline.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
+      ),
+      child: SafeArea(
+        child: Obx(() {
+          final isEnabled = controller.isActionButtonEnabled;
+          final buttonText = controller.actionButtonText;
+          final isFilled = controller.isSelectedDateFilled;
+          
+          return ElevatedButton.icon(
+            onPressed: isEnabled ? () => _onActionButtonPressed(context, controller) : null,
+            icon: Icon(
+              isFilled ? Icons.visibility : Icons.add_circle_outline,
+              size: 20,
+            ),
+            label: Text(
+              isFilled ? 'Посмотреть данные' : 'Записать данные',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              backgroundColor: isEnabled 
+                  ? (isFilled ? theme.colorScheme.secondary : theme.colorScheme.primary)
+                  : theme.colorScheme.onSurface.withOpacity(0.3),
+              foregroundColor: isEnabled 
+                  ? (isFilled ? theme.colorScheme.onSecondary : theme.colorScheme.onPrimary)
+                  : theme.colorScheme.onSurface.withOpacity(0.6),
+              disabledBackgroundColor: theme.colorScheme.onSurface.withOpacity(0.1),
+              disabledForegroundColor: theme.colorScheme.onSurface.withOpacity(0.4),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          );
+        }),
       ),
     );
   }
+
+  /// Обработка нажатия на кнопку действия
+  void _onActionButtonPressed(BuildContext context, HomeController controller) {
+    try {
+      // Определяем режим на основе состояния дня
+      final isFilled = controller.isSelectedDateFilled;
+      final mode = isFilled ? 'list' : 'edit'; // Если заполнено - показываем список, иначе сразу редактирование
+      
+      // Устанавливаем режим в DataEntryController
+      final dataEntryController = Get.find<DataEntryController>();
+      dataEntryController.setInitialViewMode(mode);
+      
+      // Переключаемся на вкладку "Ввод" через NavigationController
+      final navigationController = Get.find<NavigationController>();
+      navigationController.goToDataEntry();
+    } catch (e) {
+      print('NavigationController не найден: $e');
+    }
+  }
+
+  /// Форматирует дату для отображения
+  String _formatDate(DateTime date) {
+    const months = [
+      'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+      'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
+    ];
+    
+    return '${date.day} ${months[date.month - 1]} ${date.year}';
+  }
 }
+

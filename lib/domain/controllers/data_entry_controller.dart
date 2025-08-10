@@ -2,6 +2,8 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../models/parameter.dart';
 import '../../domain/controllers/parameter_controller.dart'; // Импорт ParameterController
+import '../../domain/controllers/home_controller.dart'; // Импорт HomeController
+import '../../presentation/screens/main_navigation_screen.dart'; // Импорт NavigationController
 import '../../data/repositories/daily_record_repository_impl.dart';
 import '../../models/daily_record.dart';
 
@@ -14,11 +16,21 @@ class DataEntryController extends GetxController {
   final enteredComments = <String, String>{}.obs;
   final currentParameterIndex = 0.obs;
   Rx<DateTime> selectedDate = DateTime.now().obs;
+  final initialViewMode = 'list'.obs; // 'list' для превью, 'edit' для редактирования
 
   @override
   void onInit() {
     super.onInit();
-    selectDate(DateTime.now());
+    // Получаем выбранную дату из HomeController если он существует
+    try {
+      final homeController = Get.find<HomeController>();
+      selectedDate.value = homeController.selectedDate.value;
+    } catch (e) {
+      // Если HomeController не найден, используем сегодняшнюю дату
+      selectedDate.value = DateTime.now();
+    }
+    
+    _loadParametersForEntryForDate(selectedDate.value);
 
     // Слушаем изменения в списке параметров ParameterController
     ever(_parameterController.parameters, (updatedParameters) { // <--- СЛУШАЕМ parameters, А НЕ isParametersLoaded
@@ -30,12 +42,17 @@ class DataEntryController extends GetxController {
     selectedDate.value = date;
     _loadParametersForEntryForDate(date);
   }
+  
+  void setInitialViewMode(String mode) {
+    initialViewMode.value = mode;
+  }
 
   void _loadParametersForEntryForDate(DateTime selectedDate) async {
     final normalizedDate = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
     final dailyRecord = await loadDailyRecordForDate(normalizedDate);
-    final allParameters = _parameterController.parameters; // <--- Берем параметры ИЗ ParameterController напрямую
-    parametersForEntry.assignAll(allParameters);
+    // Берем только включенные параметры (где isEnabled = true)
+    final enabledParameters = _parameterController.parameters.where((param) => param.isEnabled).toList();
+    parametersForEntry.assignAll(enabledParameters);
 
     enteredValues.clear();
     enteredComments.clear();
@@ -124,6 +141,24 @@ class DataEntryController extends GetxController {
     try {
       await _dailyRecordRepository.insertDailyRecord(dailyRecord);
       // Daily record saved successfully
+      
+      // Реактивно обновляем HomeController после сохранения
+      try {
+        final homeController = Get.find<HomeController>();
+        await homeController.loadFilledDays();
+        homeController.updateCounters();
+      } catch (e) {
+        print('HomeController не найден для обновления: $e');
+      }
+      
+      // Переключаемся обратно на главную вкладку через NavigationController
+      try {
+        final navigationController = Get.find<NavigationController>();
+        navigationController.goToHome();
+      } catch (e) {
+        print('NavigationController не найден для навигации: $e');
+      }
+      
       Get.snackbar(
         'Успех',
         'Данные сохранены за ${DateFormat('dd.MM.yyyy').format(selectedDate.value)}',

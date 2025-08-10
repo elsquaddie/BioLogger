@@ -19,6 +19,9 @@ flutter clean               # Clean build artifacts if issues occur
 # Testing specific functionality
 flutter run --debug         # Run in debug mode for hot reload
 flutter test test/          # Run all tests
+flutter test test/models/   # Test specific models
+flutter test test/controllers/ # Test business logic
+flutter test test/presentation/ # Test UI components
 flutter build apk --debug   # Build debug APK for testing
 
 # Git workflow  
@@ -28,26 +31,57 @@ git commit -m "message"     # Commit with descriptive message
 git push origin main        # Push to remote repository
 ```
 
-## Current Priority Tasks
+## ПРИОРИТЕТ: Календарь + Пресет параметров + Экран данных
 
-**IMPORTANT**: We are implementing these specific features:
+**ПРЕСЕТ ПАРАМЕТРОВ (создается автоматически при первом запуске):**
 
-1. **Replace "Next" button with "Save" on last parameter**
-   - Find the data entry navigation logic in `lib/presentation/screens/`
-   - Detect when user is on the final parameter
-   - Change button text and behavior accordingly
+Дефолтные параметры с иконками из values.html:
+1. Сон (Number, часы) → Icons.bedtime  
+2. БАДы (Text) → Icons.medication  
+3. Оценка качества работы (Rating 1-10) → Icons.work
+4. Тренировка (Number, минуты) → Icons.fitness_center
+5. Количество шагов (Number) → Icons.directions_walk
+6. Оценка социальности (Rating 1-10) → Icons.people
+7. Оценка настроения (Rating 1-10) → Icons.sentiment_satisfied
+8. Оценка своей привлекательности (Rating 1-10) → Icons.favorite
+9. Оценка самореализации (Rating 1-10) → Icons.star
+10. Оценка качества питания (Rating 1-10) → Icons.restaurant
+11. Оценка текущих финансов (Rating 1-10) → Icons.attach_money
+12. Оценка социальной полезности (Rating 1-10) → Icons.public
+13. Оценка прошедшего дня (Rating 1-10) → Icons.thumb_up
+14. Почему такая оценка (Text) → Icons.edit_note
+15. Воспоминания обо дне (Text) → Icons.book
 
-2. **Add comment fields for each parameter**
-   - Update Parameter model to include comment field
-   - Modify database schema (add comment column to daily_records table)
-   - Add text input UI below each parameter input field
-   - Update save/load logic to handle comments
+**СТРУКТУРА БД:**
+- Поле `is_preset: boolean` для пометки дефолтных
+- Поле `is_enabled: boolean` для включения/отключения
+- Поле `sort_order: int` для пользовательского порядка
+- Дефолтные параметры нельзя удалить, только отключить
 
-3. **Redesign application UI**
-   - Implement Material Design 3 principles
-   - Use modern color scheme and typography
-   - Add smooth animations between screens
-   - Improve spacing, shadows, and visual hierarchy
+**ПОЛЬЗОВАТЕЛЬСКИЕ ПАРАМЕТРЫ:**
+- Иконка по умолчанию: Icons.analytics
+- Добавляются после дефолтных в списке
+- Можно удалять и редактировать
+
+**КАЛЕНДАРЬ + ЭКРАН ДАННЫХ:** 
+
+**КАЛЕНДАРЬ - исправления:**
+1. Заполненные дни = цифра ВНУТРИ зеленого кружка (не точка под цифрой)
+2. Выбранная незаполненная дата = серый кружок вокруг цифры  
+3. Выбранная + заполненная = зеленый кружок + двойная обводка/увеличенный размер
+4. Кнопка: "Записать данные" / "Посмотреть данные" 
+5. Заголовок над счетчиками: "Серии заполнений:"
+
+**ЭКРАН ДАННЫХ - полная переработка на основе values.html:**
+- Единый экран просмотра/редактирования  
+- Карточки как в values.html: иконка + название + значение
+- values.html - лишь референс. Нужно брать из него картинки (в будущем это будут предзаданные в бд параметры)
+- Клик по карточке → увеличение + поля ввода + автофокус
+- Вертикальный скролл между карточками при заполнении
+- Комментарии под основным полем (обрезка если длинные)
+- Кнопка "Далее" → "Сохранить" на последнем параметре
+
+**УДАЛИТЬ типы полей:** Date и Time (оставить Number, Text, Rating, Yes/No)
 
 ## Code Standards & Architecture
 
@@ -71,6 +105,12 @@ class MyController extends GetxController {
 - **Domain**: Business logic in `lib/domain/use_cases/`
 - **Data**: Repositories in `lib/data/repositories/` and DAOs in `lib/data/local_database/`
 
+**Key Architecture Components**:
+- **Models**: `Parameter` and `DailyRecord` classes in `lib/models/`
+- **Database**: SQLite via `DatabaseHelper` with version-controlled migrations
+- **Dependency Injection**: Centralized in `main.dart` using GetX `AppBindings`
+- **State Management**: Reactive variables with GetX `.obs` and `.update()`
+
 ## Key Technical Details
 
 - **Database**: SQLite with `sqflite` package
@@ -90,26 +130,30 @@ class MyController extends GetxController {
 
 ## Database Schema Notes
 
+**Current Schema (v4)**:
 ```sql
--- Parameters table stores parameter definitions
+-- Parameters table stores parameter definitions  
 CREATE TABLE parameters (
-  id INTEGER PRIMARY KEY,
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
-  data_type TEXT NOT NULL, -- Number, Text, Rating, YesNo, Time, Date
+  data_type TEXT NOT NULL, -- Number, Text, Rating, YesNo (Date/Time removed)
   unit TEXT,
-  created_at TEXT
+  scale_options TEXT -- JSON array for Rating scales
 );
 
 -- Daily records table stores user entries
 CREATE TABLE daily_records (
-  id INTEGER PRIMARY KEY,
-  parameter_id INTEGER,
-  value TEXT NOT NULL,
-  comment TEXT,  -- NEW: Add this field for comments
-  date TEXT NOT NULL,
-  FOREIGN KEY (parameter_id) REFERENCES parameters (id)
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  date TEXT NOT NULL, -- ISO 8601 date format
+  dataValues TEXT NOT NULL, -- JSON map of parameter_id -> value
+  comments TEXT -- JSON map of parameter_id -> comment
 );
 ```
+
+**Important Notes**:
+- Database migrations handled in `DatabaseHelper._onUpgrade()` 
+- DailyRecord stores all parameter values for a date in single JSON fields
+- Parameter types limited to: Number, Text, Rating, YesNo (Date/Time removed per requirements)
 
 ## UI/UX Guidelines
 

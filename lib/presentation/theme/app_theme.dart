@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // Современная цветовая палитра - вдохновлена природой и здоровьем
-  static const Color primaryGreen = Color(0xFF2E7D32);     // Главный зеленый
-  static const Color primaryLightGreen = Color(0xFF4CAF50); // Светло-зеленый
-  static const Color secondaryBlue = Color(0xFF1976D2);     // Акцентный синий
-  static const Color backgroundLight = Color(0xFFFAFDFA);   // Очень светлый зеленоватый фон
-  static const Color surfaceLight = Color(0xFFFFFFFF);      // Белая поверхность
+  // Цветовая палитра по референсу HTML
+  static const Color primaryGreen = Color(0xFF87A96B);     // Sage green #87A96B
+  static const Color primaryLightGreen = Color(0xFF87A96B); // Sage green
+  static const Color secondaryBlue = Color(0xFF5E8C6A);     // Darker green
+  static const Color backgroundLight = Color(0xFFFAF7F0);   // Cream background #FAF7F0
+  static const Color surfaceLight = Color(0xFFFFFFFF);      // White cards
   static const Color errorColor = Color(0xFFE53935);        // Красный для ошибок
   static const Color warningColor = Color(0xFFFF9800);      // Оранжевый для предупреждений
   static const Color successColor = Color(0xFF4CAF50);      // Зеленый для успеха
   
   // Серые оттенки
-  static const Color textPrimary = Color(0xFF1B1B1F);      // Темный текст
+  static const Color textPrimary = Color(0xFF2C3E3D);      // Charcoal text #2C3E3D
   static const Color textSecondary = Color(0xFF49454F);     // Вторичный текст
   static const Color textHint = Color(0xFF79747E);          // Подсказки
   static const Color outline = Color(0xFF79747E);           // Контуры

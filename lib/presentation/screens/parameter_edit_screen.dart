@@ -29,7 +29,33 @@ class _ParameterEditScreenState extends State<ParameterEditScreen> {
     // Инициализируем контроллеры и тип данных значениями из widget.parameter
     _nameController = TextEditingController(text: widget.parameter.name);
     _unitController = TextEditingController(text: widget.parameter.unit ?? '');
-    _dataType = widget.parameter.dataType;
+    _dataType = _mapDataTypeToDisplay(widget.parameter.dataType);
+  }
+  
+  // Маппинг типов данных из базы в отображаемые значения
+  String _mapDataTypeToDisplay(String dbType) {
+    switch (dbType) {
+      case 'Number': return 'Число';
+      case 'Text': return 'Текст';
+      case 'Rating': return 'Оценка';
+      case 'YesNo': return 'Да/Нет';
+      case 'Time': return 'Время';
+      case 'Date': return 'Дата';
+      default: return 'Число';
+    }
+  }
+  
+  // Маппинг отображаемых значений в типы базы данных
+  String _mapDisplayToDataType(String displayType) {
+    switch (displayType) {
+      case 'Число': return 'Number';
+      case 'Текст': return 'Text';
+      case 'Оценка': return 'Rating';
+      case 'Да/Нет': return 'YesNo';
+      case 'Время': return 'Time';
+      case 'Дата': return 'Date';
+      default: return 'Number';
+    }
   }
 
   @override
@@ -168,7 +194,7 @@ class _ParameterEditScreenState extends State<ParameterEditScreen> {
       // Создаем обновленный объект Parameter, используя ID из исходного параметра
       final updatedParameter = widget.parameter.copyWith(
         name: updatedName,
-        dataType: _dataType!,
+        dataType: _mapDisplayToDataType(_dataType!), // Преобразуем обратно в тип базы данных
         unit: updatedUnit.isEmpty ? null : updatedUnit,
         // scaleOptions пока не редактируем, но можно добавить логику и для них
       );

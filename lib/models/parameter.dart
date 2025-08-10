@@ -8,7 +8,8 @@ class Parameter {
   /// Name of the parameter (e.g., "Sleep", "Weight", "Mood")
   final String name;
 
-  /// Type of data this parameter stores ("Number", "Text", "Rating", "Yes/No", "Time", "Date")
+  /// Type of data this parameter stores ("Number", "Text", "Rating", "YesNo")
+  /// Note: "Date" and "Time" types removed as per requirements
   final String dataType;
 
   /// Optional unit of measurement (e.g., "hours", "%", "kg")
@@ -17,6 +18,21 @@ class Parameter {
   /// Optional list of possible values for "Rating" type parameters (e.g., ["1", "2", "3", "4", "5"])
   final List<String>? scaleOptions;
 
+  /// Whether this parameter is a preset (default) parameter
+  final bool isPreset;
+
+  /// Whether this parameter is currently enabled/active
+  final bool isEnabled;
+
+  /// Sort order for displaying parameters (lower numbers first)
+  final int sortOrder;
+
+  /// Icon name for preset parameters (e.g., "bedtime", "medication")
+  final String? iconName;
+
+  /// When this parameter was created
+  final DateTime createdAt;
+
   /// Constructor for creating a Parameter instance
   Parameter({
     this.id,
@@ -24,16 +40,41 @@ class Parameter {
     required this.dataType,
     this.unit,
     this.scaleOptions,
-  });
+    this.isPreset = false,
+    this.isEnabled = true,
+    this.sortOrder = 0,
+    this.iconName,
+    DateTime? createdAt,
+  }) : createdAt = createdAt ?? DateTime.now();
 
   /// Converts Parameter instance to JSON format for storage or export
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'name': name,
-      'data_type': dataType, // <--- ИЗМЕНЕНО: ключ теперь 'data_type' (snake_case)
+      'data_type': dataType,
       'unit': unit,
       'scale_options': scaleOptions == null ? null : jsonEncode(scaleOptions),
+      'is_preset': isPreset ? 1 : 0,
+      'is_enabled': isEnabled ? 1 : 0,
+      'sort_order': sortOrder,
+      'icon_name': iconName,
+      // Убираем created_at временно для совместимости
+    };
+  }
+  
+  /// Converts Parameter instance to JSON format for database insert without created_at field
+  Map<String, dynamic> toJsonForInsert() {
+    return {
+      'id': id,
+      'name': name,
+      'data_type': dataType,
+      'unit': unit,
+      'scale_options': scaleOptions == null ? null : jsonEncode(scaleOptions),
+      'is_preset': isPreset ? 1 : 0,
+      'is_enabled': isEnabled ? 1 : 0,
+      'sort_order': sortOrder,
+      'icon_name': iconName,
     };
   }
 
@@ -59,6 +100,13 @@ class Parameter {
       dataType: json['data_type'] as String? ?? '',
       unit: json['unit'] as String?,
       scaleOptions: decodedScaleOptions,
+      isPreset: (json['is_preset'] as int?) == 1,
+      isEnabled: (json['is_enabled'] as int?) != 0, // Default to true if null
+      sortOrder: json['sort_order'] as int? ?? 0,
+      iconName: json['icon_name'] as String?,
+      createdAt: json['created_at'] != null 
+          ? DateTime.parse(json['created_at'] as String)
+          : DateTime.now(),
     );
   }
 
@@ -69,6 +117,11 @@ class Parameter {
     String? dataType,
     String? unit,
     List<String>? scaleOptions,
+    bool? isPreset,
+    bool? isEnabled,
+    int? sortOrder,
+    String? iconName,
+    DateTime? createdAt,
   }) {
     return Parameter(
       id: id ?? this.id,
@@ -76,6 +129,16 @@ class Parameter {
       dataType: dataType ?? this.dataType,
       unit: unit ?? this.unit,
       scaleOptions: scaleOptions ?? this.scaleOptions,
+      isPreset: isPreset ?? this.isPreset,
+      isEnabled: isEnabled ?? this.isEnabled,
+      sortOrder: sortOrder ?? this.sortOrder,
+      iconName: iconName ?? this.iconName,
+      createdAt: createdAt ?? this.createdAt,
     );
+  }
+
+  @override
+  String toString() {
+    return 'Parameter(id: $id, name: $name, dataType: $dataType, isPreset: $isPreset, isEnabled: $isEnabled, sortOrder: $sortOrder)';
   }
 }

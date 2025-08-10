@@ -3,7 +3,7 @@ import 'package:path/path.dart';
 
 class DatabaseHelper {
   static const databaseName = "biolog_database.db";
-  static const databaseVersion = 4;
+  static const databaseVersion = 5;
 
   // Имена таблиц
   static const tableParameters = 'parameters';
@@ -14,7 +14,12 @@ class DatabaseHelper {
   static const columnParameterName = 'name';
   static const columnParameterDataType = 'data_type';
   static const columnParameterUnit = 'unit';
-  static const columnParameterScaleOptions = 'scale_options'; //  Здесь нужно будет хранить JSON или как-то сериализовать List<String>
+  static const columnParameterScaleOptions = 'scale_options';
+  static const columnParameterIsPreset = 'is_preset';
+  static const columnParameterIsEnabled = 'is_enabled';
+  static const columnParameterSortOrder = 'sort_order';
+  static const columnParameterIconName = 'icon_name';
+  static const columnParameterCreatedAt = 'created_at';
 
   // Поля таблицы daily_records
   static const columnDailyRecordId = 'id';
@@ -46,14 +51,18 @@ class DatabaseHelper {
   }
 
   Future<void> _onCreate(Database db, int version) async {
-    // Создание таблицы parameters
+    // Создание таблицы parameters с полной схемой v5 (без created_at для совместимости)
     await db.execute('''
       CREATE TABLE $tableParameters (
         $columnParameterId INTEGER PRIMARY KEY AUTOINCREMENT,
         $columnParameterName TEXT NOT NULL,
         $columnParameterDataType TEXT NOT NULL,
         $columnParameterUnit TEXT,
-        $columnParameterScaleOptions TEXT
+        $columnParameterScaleOptions TEXT,
+        $columnParameterIsPreset INTEGER DEFAULT 0,
+        $columnParameterIsEnabled INTEGER DEFAULT 1,
+        $columnParameterSortOrder INTEGER DEFAULT 0,
+        $columnParameterIconName TEXT
       )
     ''');
 
@@ -66,6 +75,8 @@ class DatabaseHelper {
         comments TEXT
       )
     ''');
+    
+    print('DatabaseHelper: Created new database with version $version');
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
@@ -105,6 +116,60 @@ class DatabaseHelper {
           print("Failed to add column $columnDailyRecordComments!");
         }
       }
+    }
+
+    if (oldVersion < 5) {
+      print("Applying migration for version 5: Adding preset parameter support...");
+      
+      // Add new columns for preset support
+      List<String> newColumns = [
+        'ALTER TABLE $tableParameters ADD COLUMN $columnParameterIsPreset INTEGER DEFAULT 0',
+        'ALTER TABLE $tableParameters ADD COLUMN $columnParameterIsEnabled INTEGER DEFAULT 1',
+        'ALTER TABLE $tableParameters ADD COLUMN $columnParameterSortOrder INTEGER DEFAULT 0',
+        'ALTER TABLE $tableParameters ADD COLUMN $columnParameterIconName TEXT',
+        'ALTER TABLE $tableParameters ADD COLUMN $columnParameterCreatedAt TEXT',
+      ];
+      
+      for (String sql in newColumns) {
+        try {
+          await db.execute(sql);
+          print("Successfully executed: $sql");
+        } catch (e) {
+          print("Error executing: $sql - Error: $e");
+          // Continue with other migrations even if one fails
+        }
+      }
+      
+      // Update existing parameters with default created_at timestamp
+      try {
+        await db.execute('''
+          UPDATE $tableParameters 
+          SET $columnParameterCreatedAt = datetime('now') 
+          WHERE $columnParameterCreatedAt IS NULL OR $columnParameterCreatedAt = ''
+        ''');
+        print("Updated existing parameters with created_at timestamps");
+      } catch (e) {
+        print("Error updating created_at timestamps: $e");
+      }
+      
+      print("Migration to version 5 completed");
+    }
+  }
+
+  /// Get current database schema info for debugging
+  Future<void> printTableSchema() async {
+    Database db = await database;
+    var parametersSchema = await db.rawQuery('PRAGMA table_info($tableParameters)');
+    var dailyRecordsSchema = await db.rawQuery('PRAGMA table_info($tableDailyRecords)');
+    
+    print('=== Parameters Table Schema ===');
+    for (var col in parametersSchema) {
+      print('${col['name']}: ${col['type']} (nullable: ${col['notnull'] == 0})');
+    }
+    
+    print('=== Daily Records Table Schema ===');
+    for (var col in dailyRecordsSchema) {
+      print('${col['name']}: ${col['type']} (nullable: ${col['notnull'] == 0})');
     }
   }
 }

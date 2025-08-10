@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>BioLogger Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            min-height: max(884px, 100dvh);
+        }
+        .bg-cream {
+            background-color: #FAF7F0;
+        }
+        .text-charcoal {
+            color: #2C3E3D;
+        }
+        .bg-sage-green {
+            background-color: #87A96B;
+        }
+        .text-sage-green {
+            color: #87A96B;
+        }
+        .border-sage-green {
+            border-color: #87A96B;
+        }
+        .bg-soft-gradient {
+            background-image: linear-gradient(to bottom, #FAF7F0, #FDFBF5);
+        }
+        .bg-header-gradient {
+            background-image: linear-gradient(135deg, #87A96B, #5E8C6A);
+        }
+        .soft-shadow {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+        .bg-success {
+             background-color: #87A96B;}
+        .bg-current-day {
+            background-color: #A9A9A9;}
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-cream text-charcoal">
+<div class="flex flex-col min-h-screen">
+<header class="bg-header-gradient text-white p-6 text-center rounded-b-3xl">
+<div class="flex justify-between items-center text-xs">
+<span>6:05</span>
+<div class="flex items-center space-x-1">
+<span class="material-icons text-base">signal_cellular_alt</span>
+<span class="material-icons text-base">wifi</span>
+<span class="material-icons text-base">battery_full</span>
+</div>
+</div>
+<div class="flex flex-col items-center justify-center mt-4">
+<div class="bg-white/20 p-4 rounded-full mb-4">
+<span class="material-icons text-4xl text-white">shield</span>
+</div>
+<h1 class="text-4xl font-bold">BioLogger</h1>
+</div>
+</header>
+<main class="flex-grow p-6 flex flex-col">
+<div class="bg-white rounded-2xl p-6 soft-shadow flex-grow">
+<div class="flex justify-between items-center mb-4">
+<button class="text-charcoal"><span class="material-icons">chevron_left</span></button>
+<h2 class="text-xl font-bold text-charcoal">August 2024</h2>
+<button class="text-charcoal"><span class="material-icons">chevron_right</span></button>
+</div>
+<div class="grid grid-cols-7 gap-1 text-center text-sm text-gray-500 mb-2">
+<span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span><span>Su</span>
+</div>
+<div class="grid grid-cols-7 gap-2 text-center">
+<div class="text-gray-400">29</div>
+<div class="text-gray-400">30</div>
+<div class="text-gray-400">31</div>
+<div class="relative">1<div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-success rounded-full"></div></div>
+<div class="relative">2<div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-success rounded-full"></div></div>
+<div class="relative">3<div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-success rounded-full"></div></div>
+<div class="relative">4<div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-success rounded-full"></div></div>
+<div class="relative">5<div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-success rounded-full"></div></div>
+<div class="relative">6<div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-success rounded-full"></div></div>
+<div class="relative">7<div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-success rounded-full"></div></div>
+<div class="relative">8<div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-success rounded-full"></div></div>
+<div class="bg-current-day text-white rounded-full w-8 h-8 flex items-center justify-center mx-auto">9</div>
+<div class="text-gray-400 cursor-not-allowed">10</div>
+<div class="text-gray-400 cursor-not-allowed">11</div>
+<div class="text-gray-400 cursor-not-allowed">12</div>
+<div class="text-gray-400 cursor-not-allowed">13</div>
+<div class="text-gray-400 cursor-not-allowed">14</div>
+<div class="text-gray-400 cursor-not-allowed">15</div>
+<div class="text-gray-400 cursor-not-allowed">16</div>
+<div class="text-gray-400 cursor-not-allowed">17</div>
+<div class="text-gray-400 cursor-not-allowed">18</div>
+<div class="text-gray-400 cursor-not-allowed">19</div>
+<div class="text-gray-400 cursor-not-allowed">20</div>
+<div class="text-gray-400 cursor-not-allowed">21</div>
+<div class="text-gray-400 cursor-not-allowed">22</div>
+<div class="text-gray-400 cursor-not-allowed">23</div>
+<div class="text-gray-400 cursor-not-allowed">24</div>
+<div class="text-gray-400 cursor-not-allowed">25</div>
+<div class="text-gray-400 cursor-not-allowed">26</div>
+<div class="text-gray-400 cursor-not-allowed">27</div>
+<div class="text-gray-400 cursor-not-allowed">28</div>
+<div class="text-gray-400 cursor-not-allowed">29</div>
+<div class="text-gray-400 cursor-not-allowed">30</div>
+<div class="text-gray-400 cursor-not-allowed">31</div>
+<div class="text-gray-400">1</div>
+</div>
+<div class="mt-6 pt-6 border-t border-gray-200 flex justify-around text-center">
+<div>
+<p class="text-2xl font-bold text-sage-green">8</p>
+<p class="text-xs text-gray-500">Consecutive Days Logged</p>
+</div>
+<div>
+<p class="text-2xl font-bold text-sage-green">8</p>
+<p class="text-xs text-gray-500">Days Logged this Month</p>
+</div>
+</div>
+</div>
+<button class="w-full bg-sage-green text-white font-bold py-3 px-4 rounded-full shadow-md hover:bg-opacity-90 transition-all duration-300 flex items-center justify-center mt-6">
+<span class="material-icons mr-2">add_circle_outline</span>
+                Log Data
+            </button>
+</main>
+<footer class="bg-white/80 backdrop-blur-sm border-t border-gray-200 p-2 mt-auto">
+<div class="flex justify-around">
+<a class="flex flex-col items-center text-sage-green p-2" href="#">
+<span class="material-icons">dashboard</span>
+<span class="text-xs">Dashboard</span>
+</a>
+<a class="flex flex-col items-center text-gray-500 p-2" href="#">
+<span class="material-icons">add_task</span>
+<span class="text-xs">Log</span>
+</a>
+<a class="flex flex-col items-center text-gray-500 p-2" href="#">
+<span class="material-icons">analytics</span>
+<span class="text-xs">Data</span>
+</a>
+<a class="flex flex-col items-center text-gray-500 p-2" href="#">
+<span class="material-icons">settings</span>
+<span class="text-xs">Settings</span>
+</a>
+</div>
+</footer>
+</div>
+
+</body></html>

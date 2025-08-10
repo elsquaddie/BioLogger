@@ -8,26 +8,14 @@ class ParameterDao {
 
   // Метод для добавления нового параметра в базу данных
   Future<int> insertParameter(Parameter parameter) async {
-    Database db = await _databaseHelper.database; // Получаем доступ к базе данных
-    Map<String, dynamic> values = parameter.toJson(); // Преобразуем Parameter в Map для вставки в БД
+    Database db = await _databaseHelper.database;
+    Map<String, dynamic> values = parameter.toJson();
 
-    // Явно указываем порядок колонок и ключи values
-    Map<String, dynamic> explicitValues = {
-      'id': values['id'],
-      'name': values['name'],
-      'data_type': values['data_type'],
-      'unit': values['unit'],
-      'scale_options': values['scaleOptions'],
-    };
-
-    // Сериализуем scaleOptions в JSON строку, если они есть
-    if (explicitValues['scale_options'] != null) {
-      explicitValues['scale_options'] = jsonEncode(explicitValues['scale_options']);
-    }
+    print("ParameterDao: Inserting parameter with values: $values");
 
     return await db.insert(
       DatabaseHelper.tableParameters,
-      explicitValues,
+      values,
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
@@ -37,53 +25,37 @@ class ParameterDao {
     Database db = await _databaseHelper.database;
     List<Map<String, dynamic>> maps = await db.query(
       DatabaseHelper.tableParameters,
-      columns: [
-        DatabaseHelper.columnParameterId,
-        DatabaseHelper.columnParameterName,
-        DatabaseHelper.columnParameterDataType,
-        DatabaseHelper.columnParameterUnit,
-        DatabaseHelper.columnParameterScaleOptions,
-      ],
       where: '${DatabaseHelper.columnParameterId} = ?',
       whereArgs: [id],
     );
 
     if (maps.isNotEmpty) {
-      Map<String, dynamic> parameterMap = Map<String, dynamic>.from(maps.first);
-      // Десериализуем scaleOptions из JSON строки обратно в List<String>
-      if (parameterMap[DatabaseHelper.columnParameterScaleOptions] != null) {
-        parameterMap[DatabaseHelper.columnParameterScaleOptions] = jsonDecode(parameterMap[DatabaseHelper.columnParameterScaleOptions]);
-      }
-      return Parameter.fromJson(Map<String, dynamic>.from(parameterMap)); // Преобразуем Map обратно в Parameter
+      return Parameter.fromJson(Map<String, dynamic>.from(maps.first));
     }
-    return null; // Возвращаем null, если параметр не найден
+    return null;
   }
 
   // Метод для получения всех параметров
   Future<List<Parameter>> getAllParameters() async {
     print("ParameterDao: getAllParameters() - Start fetching all parameters from database...");
 
-    Database? db = await _databaseHelper.database;
-    List<Map> maps = await db!.query(DatabaseHelper.tableParameters);
+    Database db = await _databaseHelper.database;
+    List<Map<String, dynamic>> maps = await db.query(
+      DatabaseHelper.tableParameters,
+      orderBy: '${DatabaseHelper.columnParameterIsPreset} DESC, ${DatabaseHelper.columnParameterSortOrder} ASC, ${DatabaseHelper.columnParameterName} ASC',
+    );
 
-    print("ParameterDao: getAllParameters() - SQL query executed: SELECT * FROM ${DatabaseHelper.tableParameters}");
-    print("ParameterDao: getAllParameters() - Raw data from database: $maps"); // Added this line
+    print("ParameterDao: getAllParameters() - Raw data from database: $maps");
 
     if (maps.isNotEmpty) {
       try {
         final parameters = maps.map((map) {
-          Map<String, dynamic> parameterMap = Map<String, dynamic>.from(map);
-          if (parameterMap[DatabaseHelper.columnParameterScaleOptions] != null) {
-            parameterMap[DatabaseHelper.columnParameterScaleOptions] = 
-                jsonDecode(parameterMap[DatabaseHelper.columnParameterScaleOptions]);
-          }
-          print("ParameterDao: Processing parameter: $parameterMap"); // Added this line
-          return Parameter.fromJson(parameterMap);
+          return Parameter.fromJson(Map<String, dynamic>.from(map));
         }).toList();
         print("ParameterDao: Successfully converted ${parameters.length} parameters");
         return parameters;
       } catch (e) {
-        print("ParameterDao: Error converting database data to Parameters: $e"); // Added this line
+        print("ParameterDao: Error converting database data to Parameters: $e");
         rethrow;
       }
     }
@@ -92,14 +64,65 @@ class ParameterDao {
     return [];
   }
 
+  // Метод для получения только включенных параметров
+  Future<List<Parameter>> getEnabledParameters() async {
+    print("ParameterDao: getEnabledParameters() - Fetching enabled parameters...");
+
+    Database db = await _databaseHelper.database;
+    List<Map<String, dynamic>> maps = await db.query(
+      DatabaseHelper.tableParameters,
+      where: '${DatabaseHelper.columnParameterIsEnabled} = ?',
+      whereArgs: [1],
+      orderBy: '${DatabaseHelper.columnParameterIsPreset} DESC, ${DatabaseHelper.columnParameterSortOrder} ASC, ${DatabaseHelper.columnParameterName} ASC',
+    );
+
+    if (maps.isNotEmpty) {
+      try {
+        final parameters = maps.map((map) {
+          return Parameter.fromJson(Map<String, dynamic>.from(map));
+        }).toList();
+        print("ParameterDao: Successfully fetched ${parameters.length} enabled parameters");
+        return parameters;
+      } catch (e) {
+        print("ParameterDao: Error converting enabled parameters: $e");
+        rethrow;
+      }
+    }
+
+    print("ParameterDao: No enabled parameters found");
+    return [];
+  }
+
+  // Метод для получения только пресет параметров
+  Future<List<Parameter>> getPresetParameters() async {
+    Database db = await _databaseHelper.database;
+    List<Map<String, dynamic>> maps = await db.query(
+      DatabaseHelper.tableParameters,
+      where: '${DatabaseHelper.columnParameterIsPreset} = ?',
+      whereArgs: [1],
+      orderBy: '${DatabaseHelper.columnParameterSortOrder} ASC',
+    );
+
+    return maps.map((map) => Parameter.fromJson(Map<String, dynamic>.from(map))).toList();
+  }
+
+  // Метод для получения только пользовательских параметров
+  Future<List<Parameter>> getUserParameters() async {
+    Database db = await _databaseHelper.database;
+    List<Map<String, dynamic>> maps = await db.query(
+      DatabaseHelper.tableParameters,
+      where: '${DatabaseHelper.columnParameterIsPreset} = ?',
+      whereArgs: [0],
+      orderBy: '${DatabaseHelper.columnParameterSortOrder} ASC, ${DatabaseHelper.columnParameterName} ASC',
+    );
+
+    return maps.map((map) => Parameter.fromJson(Map<String, dynamic>.from(map))).toList();
+  }
+
   // Метод для обновления параметра
   Future<int> updateParameter(Parameter parameter) async {
     Database db = await _databaseHelper.database;
     Map<String, dynamic> values = parameter.toJson();
-     // Сериализуем scaleOptions в JSON строку, если они есть
-    if (values['scaleOptions'] != null) {
-      values['scaleOptions'] = jsonEncode(values['scaleOptions']);
-    }
 
     print("ParameterDao: Updating parameter ID ${parameter.id} with values: $values");
     return await db.update(
@@ -110,13 +133,87 @@ class ParameterDao {
     );
   }
 
-  // Метод для удаления параметра по ID
+  // Метод для переключения состояния включен/выключен
+  Future<int> toggleParameterEnabled(int id, bool isEnabled) async {
+    Database db = await _databaseHelper.database;
+    
+    print("ParameterDao: Toggling parameter ID $id enabled state to $isEnabled");
+    return await db.update(
+      DatabaseHelper.tableParameters,
+      {DatabaseHelper.columnParameterIsEnabled: isEnabled ? 1 : 0},
+      where: '${DatabaseHelper.columnParameterId} = ?',
+      whereArgs: [id],
+    );
+  }
+
+  // Метод для обновления порядка сортировки
+  Future<int> updateParameterSortOrder(int id, int sortOrder) async {
+    Database db = await _databaseHelper.database;
+    
+    print("ParameterDao: Updating parameter ID $id sort order to $sortOrder");
+    return await db.update(
+      DatabaseHelper.tableParameters,
+      {DatabaseHelper.columnParameterSortOrder: sortOrder},
+      where: '${DatabaseHelper.columnParameterId} = ?',
+      whereArgs: [id],
+    );
+  }
+
+  // Метод для удаления параметра по ID (только для пользовательских параметров)
   Future<int> deleteParameter(int id) async {
-    Database? db = await _databaseHelper.database;
-    return await db!.delete(
+    Database db = await _databaseHelper.database;
+    
+    // Проверяем, что это не пресет параметр
+    List<Map<String, dynamic>> maps = await db.query(
+      DatabaseHelper.tableParameters,
+      columns: [DatabaseHelper.columnParameterIsPreset],
+      where: '${DatabaseHelper.columnParameterId} = ?',
+      whereArgs: [id],
+    );
+    
+    if (maps.isNotEmpty && maps.first[DatabaseHelper.columnParameterIsPreset] == 1) {
+      throw Exception('Cannot delete preset parameter. Use toggleParameterEnabled instead.');
+    }
+    
+    print("ParameterDao: Deleting parameter ID $id");
+    return await db.delete(
       DatabaseHelper.tableParameters,
       where: '${DatabaseHelper.columnParameterId} = ?',
       whereArgs: [id],
     );
+  }
+
+  // Метод для проверки наличия пресет параметров
+  Future<bool> hasPresetParameters() async {
+    Database db = await _databaseHelper.database;
+    List<Map<String, dynamic>> maps = await db.query(
+      DatabaseHelper.tableParameters,
+      columns: ['COUNT(*) as count'],
+      where: '${DatabaseHelper.columnParameterIsPreset} = ?',
+      whereArgs: [1],
+    );
+    
+    int count = maps.first['count'] as int;
+    print("ParameterDao: Found $count preset parameters");
+    return count > 0;
+  }
+
+  // Метод для массовой вставки параметров (для инициализации пресетов)
+  Future<void> insertPresetParameters(List<Parameter> presets) async {
+    Database db = await _databaseHelper.database;
+    
+    print("ParameterDao: Inserting ${presets.length} preset parameters...");
+    
+    Batch batch = db.batch();
+    for (Parameter preset in presets) {
+      batch.insert(
+        DatabaseHelper.tableParameters,
+        preset.toJsonForInsert(), // Используем метод без created_at для совместимости
+        conflictAlgorithm: ConflictAlgorithm.ignore, // Игнорируем если уже существует
+      );
+    }
+    
+    await batch.commit(noResult: true);
+    print("ParameterDao: Preset parameters insertion completed");
   }
 }
