@@ -158,12 +158,12 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            // Если мы в режиме редактирования и пришли из списка, возвращаемся к списку
-            if (!_isListViewMode.value) {
-              _isListViewMode.value = true;
-              _dataEntryController.setInitialViewMode('list');
+            // Если мы в режиме списка, возвращаемся к режиму редактирования
+            if (_isListViewMode.value) {
+              _isListViewMode.value = false;
+              _loadCurrentParameterData();
             } else {
-              // Если мы в режиме списка, возвращаемся на главную
+              // Если мы в режиме редактирования, возвращаемся на главную
               try {
                 final navigationController = Get.find<NavigationController>();
                 navigationController.goToHome();
@@ -174,17 +174,18 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
           },
         ),
         actions: [
-          Obx(() => IconButton(
-            icon: Icon(_isListViewMode.value ? Icons.edit : Icons.list),
-            tooltip: _isListViewMode.value ? 'Режим редактирования' : 'Быстрый просмотр',
-            onPressed: () {
-              _isListViewMode.value = !_isListViewMode.value;
-              if (!_isListViewMode.value) {
-                // При возврате к режиму редактирования, загружаем данные
-                _loadCurrentParameterData();
-              }
-            },
-          )),
+          Obx(() {
+            // Не показываем иконку переключения режима когда активен список
+            if (_isListViewMode.value) return const SizedBox.shrink();
+            
+            return IconButton(
+              icon: const Icon(Icons.list),
+              tooltip: 'Быстрый просмотр',
+              onPressed: () {
+                _isListViewMode.value = true;
+              },
+            );
+          }),
           Obx(() {
             final totalParams = _dataEntryController.parametersForEntry.length;
             final currentIndex = _dataEntryController.currentParameterIndex.value;
@@ -294,22 +295,10 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Заголовок с датой в стиле values.html
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
-          child: Text(
-            _formatDateForList(_dataEntryController.selectedDate.value),
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFF141613),
-            ),
-          ),
-        ),
-        
         // Список параметров
         Expanded(
           child: ListView.builder(
-            padding: EdgeInsets.zero,
+            padding: const EdgeInsets.fromLTRB(0, 16, 0, 0),
             itemCount: parameters.length,
             itemBuilder: (context, index) {
               final parameter = parameters[index];
@@ -571,23 +560,6 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
                     'Единицы: ${parameter.unit}',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-                if (parameter.isPreset) ...[
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      'Пресет',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onPrimaryContainer,
-                        fontWeight: FontWeight.w500,
-                      ),
                     ),
                   ),
                 ],

@@ -59,6 +59,7 @@ lib/
       daily_record_controller.dart
       data_entry_controller.dart
       home_controller.dart
+      metrics_tab_controller.dart
       parameter_controller.dart
     services/
       preset_parameters_service.dart
@@ -89,12 +90,12 @@ lib/
       metrics_screen.dart
       parameter_create_screen.dart
       parameter_edit_screen.dart
-      parameter_list_screen.dart
       settings_screen.dart
     theme/
       app_theme.dart
     widgets/
       calendar_widget.dart
+      parameter_list_widget.dart
   utils/
     csv_exporter.dart
     parameter_icons.dart
@@ -125,7 +126,8 @@ This section contains the contents of the repository's files.
       "Bash(git add:*)",
       "Bash(rm:*)",
       "Bash(r)",
-      "Bash(adb shell run-as:*)"
+      "Bash(adb shell run-as:*)",
+      "Bash(mv:*)"
     ],
     "deny": []
   }
@@ -822,6 +824,35 @@ class HomeController extends GetxController {
     print('Action Button Text: $actionButtonText');
     print('=====================================');
   }
+}
+</file>
+
+<file path="lib/domain/controllers/metrics_tab_controller.dart">
+import 'package:get/get.dart';
+
+/// Контроллер для управления состоянием вкладки "Данные/Метрики"
+/// Переключает между отображением метрик и списка параметров
+class MetricsTabController extends GetxController {
+  // Реактивная переменная для отслеживания текущего состояния
+  var isShowingParameterList = false.obs;
+  
+  /// Показать экран списка параметров
+  void showParameterList() {
+    isShowingParameterList.value = true;
+  }
+  
+  /// Показать экран метрик
+  void showMetrics() {
+    isShowingParameterList.value = false;
+  }
+  
+  /// Переключить состояние между метриками и списком параметров
+  void toggleView() {
+    isShowingParameterList.value = !isShowingParameterList.value;
+  }
+  
+  /// Геттер для проверки текущего состояния
+  bool get isShowingMetrics => !isShowingParameterList.value;
 }
 </file>
 
@@ -1872,253 +1903,6 @@ extension NavigationExtension on BuildContext {
 }
 </file>
 
-<file path="lib/presentation/screens/metrics_screen.dart">
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import '../../domain/controllers/parameter_controller.dart';
-import 'parameter_list_screen.dart';
-import '../animations/page_transitions.dart';
-
-class MetricsScreen extends StatelessWidget {
-  const MetricsScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final parameterController = Get.find<ParameterController>();
-    
-    return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
-      appBar: AppBar(
-        title: const Text('Метрики'),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: theme.colorScheme.primary,
-        foregroundColor: Colors.white,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Заголовок секции
-            Text(
-              'Управление параметрами',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Создавайте и редактируйте параметры для отслеживания',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
-              ),
-            ),
-            const SizedBox(height: 24),
-            
-            // Статистика параметров
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.analytics,
-                      color: theme.colorScheme.primary,
-                      size: 32,
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Параметры для отслеживания',
-                            style: theme.textTheme.titleMedium,
-                          ),
-                          const SizedBox(height: 4),
-                          Obx(() => Text(
-                            'Всего создано: ${parameterController.parameters.length}',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSurface.withOpacity(0.7),
-                            ),
-                          )),
-                        ],
-                      ),
-                    ),
-                    Icon(
-                      Icons.arrow_forward_ios,
-                      color: theme.colorScheme.onSurface.withOpacity(0.5),
-                      size: 16,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            
-            const SizedBox(height: 16),
-            
-            // Кнопка управления параметрами
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.of(context).pushWithTransition(
-                    ParameterListScreen(),
-                    transition: PageTransitionType.slideAndFade,
-                  );
-                },
-                icon: const Icon(Icons.tune),
-                label: const Text('Управлять параметрами'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: theme.colorScheme.primary,
-                  foregroundColor: theme.colorScheme.onPrimary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ),
-            
-            const SizedBox(height: 32),
-            
-            // Будущие метрики (заглушки)
-            Text(
-              'Статистика и анализ',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Скоро здесь появятся графики и анализ ваших данных',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
-              ),
-            ),
-            const SizedBox(height: 16),
-            
-            // Заглушки для будущих метрик
-            _buildMetricCard(
-              context,
-              icon: Icons.trending_up,
-              title: 'Тренды и динамика',
-              description: 'Анализ изменений параметров со временем',
-              isComingSoon: true,
-            ),
-            
-            const SizedBox(height: 12),
-            
-            _buildMetricCard(
-              context,
-              icon: Icons.bar_chart,
-              title: 'Сравнительная статистика',
-              description: 'Сравнение показателей за разные периоды',
-              isComingSoon: true,
-            ),
-            
-            const SizedBox(height: 12),
-            
-            _buildMetricCard(
-              context,
-              icon: Icons.insights,
-              title: 'Корреляции',
-              description: 'Взаимосвязи между различными параметрами',
-              isComingSoon: true,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMetricCard(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required String description,
-    bool isComingSoon = false,
-  }) {
-    final theme = Theme.of(context);
-    
-    return Card(
-      child: Opacity(
-        opacity: isComingSoon ? 0.6 : 1.0,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  icon,
-                  color: theme.colorScheme.onPrimaryContainer,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          title,
-                          style: theme.textTheme.titleMedium,
-                        ),
-                        if (isComingSoon) ...[
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.secondary.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              'Скоро',
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: theme.colorScheme.secondary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      description,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withOpacity(0.7),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (!isComingSoon)
-                Icon(
-                  Icons.arrow_forward_ios,
-                  color: theme.colorScheme.onSurface.withOpacity(0.5),
-                  size: 16,
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-</file>
-
 <file path="lib/presentation/screens/settings_screen.dart">
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -2692,6 +2476,380 @@ class _CalendarWidgetState extends State<CalendarWidget> {
     final normalizedToday = DateTime(today.year, today.month, today.day);
     final normalizedDay = DateTime(day.year, day.month, day.day);
     return normalizedDay == normalizedToday;
+  }
+}
+</file>
+
+<file path="lib/presentation/widgets/parameter_list_widget.dart">
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../../domain/controllers/parameter_controller.dart';
+import '../../models/parameter.dart';
+import '../screens/parameter_create_screen.dart';
+import '../screens/parameter_edit_screen.dart';
+import '../theme/app_theme.dart';
+import '../animations/page_transitions.dart';
+import '../../utils/parameter_icons.dart';
+
+class ParameterListWidget extends StatelessWidget {
+  ParameterListWidget({Key? key}) : super(key: key);
+
+  final ParameterController _parameterController = Get.find();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
+    return Obx(() {
+        if (!_parameterController.isParametersLoaded.value) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+                Text(
+                  'Загрузка параметров...',
+                  style: theme.textTheme.bodyMedium,
+                ),
+              ],
+            ),
+          );
+        } else if (_parameterController.parameters.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: AppTheme.pagePadding,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.tune,
+                    size: 80,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Пока нет параметров',
+                    style: theme.textTheme.headlineSmall,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Создайте первый параметр для отслеживания ваших данных',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 32),
+                  ElevatedButton.icon(
+                    onPressed: () => Navigator.of(context).pushWithTransition(
+                      const ParameterCreateScreen(),
+                      transition: PageTransitionType.slideFromBottom,
+                    ),
+                    icon: const Icon(Icons.add),
+                    label: const Text('Создать первый параметр'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        } else {
+          // Единый список всех параметров
+          return Stack(
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(bottom: 80), // Отступ для FAB
+                child: ReorderableListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _parameterController.parameters.length,
+                  onReorder: (oldIndex, newIndex) async {
+                    if (newIndex > oldIndex) {
+                      newIndex -= 1;
+                    }
+                    
+                    final reorderedParams = List<Parameter>.from(_parameterController.parameters);
+                    final parameter = reorderedParams.removeAt(oldIndex);
+                    reorderedParams.insert(newIndex, parameter);
+                    
+                    // Обновляем sort_order для всех параметров
+                    await _parameterController.reorderAllParameters(reorderedParams);
+                  },
+                  itemBuilder: (context, index) {
+                    final parameter = _parameterController.parameters[index];
+                    return _buildParameterTile(context, parameter, theme, index);
+                  },
+                ),
+              ),
+              // FloatingActionButton остается для функциональности
+              Positioned(
+                bottom: 16,
+                right: 16,
+                child: FloatingActionButton.extended(
+                  onPressed: () => Navigator.of(context).pushWithTransition(
+                    const ParameterCreateScreen(),
+                    transition: PageTransitionType.slideFromBottom,
+                  ),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Добавить'),
+                ),
+              ),
+            ],
+          );
+        }
+      });
+  }
+
+  // Единый виджет для всех параметров
+  Widget _buildParameterTile(BuildContext context, Parameter parameter, ThemeData theme, int index) {
+    return Card(
+      key: ValueKey(parameter.id),
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      child: InkWell(
+        onTap: () => Navigator.of(context).pushWithTransition(
+          ParameterEditScreen(parameter: parameter),
+          transition: PageTransitionType.slideAndFade,
+        ),
+        borderRadius: BorderRadius.circular(AppTheme.cardBorderRadius),
+        child: Padding(
+          padding: AppTheme.cardPadding,
+          child: Row(
+            children: [
+              // Drag handle + Иконка
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.drag_handle,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 8),
+                  ParameterIcons.buildParameterIcon(
+                    parameter,
+                    context,
+                    size: 24.0,
+                    padding: 12.0,
+                  ),
+                ],
+              ),
+              const SizedBox(width: 16),
+              // Основная информация
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      parameter.name,
+                      style: theme.textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 4),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      children: [
+                        Chip(
+                          label: Text(
+                            parameter.dataType,
+                            style: theme.textTheme.bodySmall,
+                          ),
+                          backgroundColor: theme.colorScheme.secondaryContainer,
+                          side: BorderSide.none,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                        ),
+                        if (parameter.isPreset)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primaryContainer,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.star,
+                                  size: 12,
+                                  color: theme.colorScheme.onPrimaryContainer,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Пресет',
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: theme.colorScheme.onPrimaryContainer,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        if (parameter.unit != null && parameter.unit!.isNotEmpty)
+                          Chip(
+                            label: Text(
+                              parameter.unit!,
+                              style: theme.textTheme.bodySmall,
+                            ),
+                            backgroundColor: theme.colorScheme.surfaceVariant,
+                            side: BorderSide.none,
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              // Кнопки управления
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Переключатель активности
+                  Switch(
+                    value: parameter.isEnabled,
+                    onChanged: (value) async {
+                      await _parameterController.toggleParameterEnabled(parameter.id!, value);
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  // Меню действий
+                  PopupMenuButton<String>(
+                    onSelected: (value) {
+                      if (value == 'edit') {
+                        Navigator.of(context).pushWithTransition(
+                          ParameterEditScreen(parameter: parameter),
+                          transition: PageTransitionType.slideAndFade,
+                        );
+                      } else if (value == 'delete') {
+                        _showDeleteConfirmationDialog(context, parameter);
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      PopupMenuItem(
+                        value: 'edit',
+                        child: Row(
+                          children: [
+                            Icon(Icons.edit, color: theme.colorScheme.primary),
+                            const SizedBox(width: 12),
+                            const Text('Редактировать'),
+                          ],
+                        ),
+                      ),
+                      if (!parameter.isPreset) // Только для пользовательских параметров
+                        PopupMenuItem(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              Icon(Icons.delete, color: theme.colorScheme.error),
+                              const SizedBox(width: 12),
+                              const Text('Удалить'),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteConfirmationDialog(BuildContext context, Parameter parameter) {
+    final theme = Theme.of(context);
+    
+    // Проверяем, что это не пресет параметр
+    if (parameter.isPreset) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Встроенные параметры нельзя удалить. Вы можете их отключить.'),
+          backgroundColor: theme.colorScheme.errorContainer,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          icon: Icon(
+            Icons.warning_amber_rounded,
+            color: theme.colorScheme.error,
+            size: 32,
+          ),
+          title: const Text('Удалить параметр?'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Вы уверены, что хотите удалить параметр "${parameter.name}"?',
+                style: theme.textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Все связанные данные будут потеряны навсегда. Это действие нельзя отменить.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Отмена'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: theme.colorScheme.error,
+                foregroundColor: theme.colorScheme.onError,
+              ),
+              onPressed: () async {
+                Navigator.of(context).pop();
+                
+                // Показываем индикатор загрузки
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (context) => const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+                
+                try {
+                  await _parameterController.deleteParameter(parameter.id!);
+                  Navigator.of(context).pop(); // Закрыть loading
+                  
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Параметр "${parameter.name}" удален'),
+                      backgroundColor: theme.colorScheme.primaryContainer,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                } catch (e) {
+                  Navigator.of(context).pop(); // Закрыть loading
+                  
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Ошибка удаления: ${e.toString()}'),
+                      backgroundColor: theme.colorScheme.error,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
+              },
+              child: const Text('Удалить'),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
 </file>
@@ -4167,208 +4325,281 @@ class DailyRecord {
 }
 </file>
 
-<file path="lib/presentation/screens/parameter_create_screen.dart">
+<file path="lib/presentation/screens/metrics_screen.dart">
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../models/parameter.dart';
 import '../../domain/controllers/parameter_controller.dart';
-import '../theme/app_theme.dart';
+import '../../domain/controllers/metrics_tab_controller.dart';
+import '../widgets/parameter_list_widget.dart';
+import '../animations/page_transitions.dart';
+import 'parameter_create_screen.dart';
 
-class ParameterCreateScreen extends StatefulWidget {
-  const ParameterCreateScreen({Key? key}) : super(key: key);
-
-  @override
-  State<ParameterCreateScreen> createState() => _ParameterCreateScreenState();
-}
-class _ParameterCreateScreenState extends State<ParameterCreateScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _parameterController = Get.find<ParameterController>();
-  String _parameterName = '';
-  String? _dataType;
-  String _unit = '';
+class MetricsScreen extends StatelessWidget {
+  const MetricsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final parameterController = Get.find<ParameterController>();
+    final metricsTabController = Get.find<MetricsTabController>();
     
-    return Scaffold(
-      backgroundColor: theme.colorScheme.background,
+    return Obx(() => Scaffold(
+      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
-        title: const Text('Создать параметр'),
+        title: Text(
+          metricsTabController.isShowingParameterList.value 
+            ? 'Управление параметрами' 
+            : 'Метрики'
+        ),
+        centerTitle: true,
+        elevation: 0,
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: Colors.white,
+        leading: metricsTabController.isShowingParameterList.value 
+          ? IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => metricsTabController.showMetrics(),
+            )
+          : null,
+        actions: metricsTabController.isShowingParameterList.value
+          ? [
+              IconButton(
+                icon: const Icon(Icons.add),
+                tooltip: 'Создать параметр',
+                onPressed: () => Navigator.of(context).pushWithTransition(
+                  const ParameterCreateScreen(),
+                  transition: PageTransitionType.slideFromBottom,
+                ),
+              ),
+            ]
+          : null,
       ),
-      body: SingleChildScrollView(
-        padding: AppTheme.pagePadding,
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              Card(
-                child: Padding(
-                  padding: AppTheme.cardPadding,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.tune,
-                            color: theme.colorScheme.primary,
-                            size: 24,
+      body: metricsTabController.isShowingParameterList.value
+        ? ParameterListWidget() // Новый виджет без Scaffold
+        : _buildMetricsContent(context, theme, parameterController, metricsTabController), // Текущий контент метрик
+    ));
+  }
+  
+  /// Строим содержимое экрана метрик
+  Widget _buildMetricsContent(
+    BuildContext context, 
+    ThemeData theme, 
+    ParameterController parameterController,
+    MetricsTabController metricsTabController
+  ) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Заголовок секции
+          Text(
+            'Управление параметрами',
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Создавайте и редактируйте параметры для отслеживания',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.7),
+            ),
+          ),
+          const SizedBox(height: 24),
+          
+          // Статистика параметров
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.analytics,
+                    color: theme.colorScheme.primary,
+                    size: 32,
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Параметры для отслеживания',
+                          style: theme.textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 4),
+                        Obx(() => Text(
+                          'Всего создано: ${parameterController.parameters.length}',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurface.withOpacity(0.7),
                           ),
-                          const SizedBox(width: 12),
-                          Text(
-                            'Информация о параметре',
-                            style: theme.textTheme.titleLarge,
+                        )),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    color: theme.colorScheme.onSurface.withOpacity(0.5),
+                    size: 16,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Кнопка управления параметрами - теперь вызывает контроллер
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => metricsTabController.showParameterList(),
+              icon: const Icon(Icons.tune),
+              label: const Text('Управлять параметрами'),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: theme.colorScheme.onPrimary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 32),
+          
+          // Будущие метрики (заглушки)
+          Text(
+            'Статистика и анализ',
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Скоро здесь появятся графики и анализ ваших данных',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.7),
+            ),
+          ),
+          const SizedBox(height: 16),
+          
+          // Заглушки для будущих метрик
+          _buildMetricCard(
+            context,
+            icon: Icons.trending_up,
+            title: 'Тренды и динамика',
+            description: 'Анализ изменений параметров со временем',
+            isComingSoon: true,
+          ),
+          
+          const SizedBox(height: 12),
+          
+          _buildMetricCard(
+            context,
+            icon: Icons.bar_chart,
+            title: 'Сравнительная статистика',
+            description: 'Сравнение показателей за разные периоды',
+            isComingSoon: true,
+          ),
+          
+          const SizedBox(height: 12),
+          
+          _buildMetricCard(
+            context,
+            icon: Icons.insights,
+            title: 'Корреляции',
+            description: 'Взаимосвязи между различными параметрами',
+            isComingSoon: true,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetricCard(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String description,
+    bool isComingSoon = false,
+  }) {
+    final theme = Theme.of(context);
+    
+    return Card(
+      child: Opacity(
+        opacity: isComingSoon ? 0.6 : 1.0,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  icon,
+                  color: theme.colorScheme.onPrimaryContainer,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          title,
+                          style: theme.textTheme.titleMedium,
+                        ),
+                        if (isComingSoon) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.secondary.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              'Скоро',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: theme.colorScheme.secondary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ),
                         ],
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      description,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withOpacity(0.7),
                       ),
-                      const SizedBox(height: 24),
-                      TextFormField(
-                        decoration: InputDecoration(
-                          labelText: 'Название параметра',
-                          hintText: 'Например: Вес, Настроение, Сон',
-                          prefixIcon: const Icon(Icons.label_outline),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Пожалуйста, введите название параметра';
-                          }
-                          return null;
-                        },
-                        onSaved: (value) {
-                          _parameterName = value!;
-                        },
-                      ),
-                      const SizedBox(height: 20),
-                      DropdownButtonFormField<String>(
-                        decoration: InputDecoration(
-                          labelText: 'Тип данных',
-                          hintText: 'Выберите тип данных для параметра',
-                          prefixIcon: const Icon(Icons.category_outlined),
-                        ),
-                        value: _dataType,
-                        items: <String>['Число', 'Текст', 'Оценка', 'Да/Нет', 'Время', 'Дата']
-                            .map<DropdownMenuItem<String>>((String value) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Row(
-                              children: [
-                                Icon(
-                                  _getTypeIcon(value),
-                                  size: 20,
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
-                                const SizedBox(width: 12),
-                                Text(value),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Пожалуйста, выберите тип данных';
-                          }
-                          return null;
-                        },
-                        onChanged: (String? newValue) {
-                          setState(() {
-                            _dataType = newValue;
-                          });
-                        },
-                        onSaved: (value) {
-                          _dataType = value;
-                        },
-                      ),
-                      const SizedBox(height: 20),
-                      TextFormField(
-                        decoration: InputDecoration(
-                          labelText: 'Единица измерения (опционально)',
-                          hintText: 'кг, см, баллы, часы и т.д.',
-                          prefixIcon: const Icon(Icons.straighten),
-                        ),
-                        onSaved: (value) {
-                          _unit = value ?? '';
-                        },
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _saveParameter,
-                  icon: const Icon(Icons.save),
-                  label: const Text('Создать параметр'),
+              if (!isComingSoon)
+                Icon(
+                  Icons.arrow_forward_ios,
+                  color: theme.colorScheme.onSurface.withOpacity(0.5),
+                  size: 16,
                 ),
-              ),
             ],
           ),
         ),
       ),
     );
-  }
-
-  void _saveParameter() async {
-    final theme = Theme.of(context);
-    if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
-      // Parameter creation data processed
-
-      final newParameter = Parameter(
-        name: _parameterName,
-        dataType: _dataType!,
-        unit: _unit.isEmpty ? null : _unit,
-      );
-
-      try {
-        await _parameterController.createParameter(newParameter);
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Параметр "$_parameterName" создан успешно!'),
-            backgroundColor: theme.colorScheme.primaryContainer,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-
-        _formKey.currentState!.reset();
-        setState(() {
-          _dataType = null;
-          _parameterName = '';
-          _unit = '';
-        });
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Ошибка при сохранении: $e'),
-            backgroundColor: theme.colorScheme.error,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    }
-  }
-  
-  IconData _getTypeIcon(String dataType) {
-    switch (dataType.toLowerCase()) {
-      case 'число':
-        return Icons.numbers;
-      case 'текст':
-        return Icons.text_fields;
-      case 'оценка':
-        return Icons.star_rate;
-      case 'да/нет':
-        return Icons.check_box;
-      case 'время':
-        return Icons.access_time;
-      case 'дата':
-        return Icons.date_range;
-      default:
-        return Icons.tune;
-    }
   }
 }
 </file>
@@ -4760,234 +4991,6 @@ migration:
   unmanaged_files:
     - 'lib/main.dart'
     - 'ios/Runner.xcodeproj/project.pbxproj'
-</file>
-
-<file path="CLAUDE.md">
-# CLAUDE.md
-
-This file provides guidance to Claude Code when working with the BioLogger Flutter application.
-
-## Project Overview
-
-BioLogger is a Flutter application for tracking personal metrics and life quality data. Users define custom parameters (Sleep Hours, Mood, etc.), log daily progress, and export data to CSV format.
-
-## Essential Commands
-
-```bash
-# Flutter development
-flutter pub get              # Install dependencies - run this first!
-flutter run                  # Run app on connected device/simulator  
-flutter test                 # Run unit and widget tests
-flutter analyze             # Static code analysis with linting
-flutter clean               # Clean build artifacts if issues occur
-
-# Testing specific functionality
-flutter run --debug         # Run in debug mode for hot reload
-flutter test test/          # Run all tests
-flutter test test/models/   # Test specific models
-flutter test test/controllers/ # Test business logic
-flutter test test/presentation/ # Test UI components
-flutter build apk --debug   # Build debug APK for testing
-
-# Git workflow  
-git status                  # Check current changes
-git add .                   # Stage all changes
-git commit -m "message"     # Commit with descriptive message
-git push origin main        # Push to remote repository
-```
-
-## ПРИОРИТЕТ: Календарь + Пресет параметров + Экран данных
-
-**ПРЕСЕТ ПАРАМЕТРОВ (создается автоматически при первом запуске):**
-
-Дефолтные параметры с иконками из values.html:
-1. Сон (Number, часы) → Icons.bedtime  
-2. БАДы (Text) → Icons.medication  
-3. Оценка качества работы (Rating 1-10) → Icons.work
-4. Тренировка (Number, минуты) → Icons.fitness_center
-5. Количество шагов (Number) → Icons.directions_walk
-6. Оценка социальности (Rating 1-10) → Icons.people
-7. Оценка настроения (Rating 1-10) → Icons.sentiment_satisfied
-8. Оценка своей привлекательности (Rating 1-10) → Icons.favorite
-9. Оценка самореализации (Rating 1-10) → Icons.star
-10. Оценка качества питания (Rating 1-10) → Icons.restaurant
-11. Оценка текущих финансов (Rating 1-10) → Icons.attach_money
-12. Оценка социальной полезности (Rating 1-10) → Icons.public
-13. Оценка прошедшего дня (Rating 1-10) → Icons.thumb_up
-14. Почему такая оценка (Text) → Icons.edit_note
-15. Воспоминания обо дне (Text) → Icons.book
-
-**СТРУКТУРА БД:**
-- Поле `is_preset: boolean` для пометки дефолтных
-- Поле `is_enabled: boolean` для включения/отключения
-- Поле `sort_order: int` для пользовательского порядка
-- Дефолтные параметры нельзя удалить, только отключить
-
-**ПОЛЬЗОВАТЕЛЬСКИЕ ПАРАМЕТРЫ:**
-- Иконка по умолчанию: Icons.analytics
-- Добавляются после дефолтных в списке
-- Можно удалять и редактировать
-
-**КАЛЕНДАРЬ + ЭКРАН ДАННЫХ:** 
-
-**КАЛЕНДАРЬ - исправления:**
-1. Заполненные дни = цифра ВНУТРИ зеленого кружка (не точка под цифрой)
-2. Выбранная незаполненная дата = серый кружок вокруг цифры  
-3. Выбранная + заполненная = зеленый кружок + двойная обводка/увеличенный размер
-4. Кнопка: "Записать данные" / "Посмотреть данные" 
-5. Заголовок над счетчиками: "Серии заполнений:"
-
-**ЭКРАН ДАННЫХ - полная переработка на основе values.html:**
-- Единый экран просмотра/редактирования  
-- Карточки как в values.html: иконка + название + значение
-- values.html - лишь референс. Нужно брать из него картинки (в будущем это будут предзаданные в бд параметры)
-- Клик по карточке → увеличение + поля ввода + автофокус
-- Вертикальный скролл между карточками при заполнении
-- Комментарии под основным полем (обрезка если длинные)
-- Кнопка "Далее" → "Сохранить" на последнем параметре
-
-**УДАЛИТЬ типы полей:** Date и Time (оставить Number, Text, Rating, Yes/No)
-
-## Code Standards & Architecture
-
-```dart
-// Use GetX for state management
-class MyController extends GetxController {
-  // Reactive variables
-  var isLoading = false.obs;
-  
-  // Methods should be async when needed
-  Future<void> saveData() async { }
-}
-
-// Follow Clean Architecture layers:
-// Presentation -> Domain -> Data
-// UI calls Controller -> Controller calls UseCase -> UseCase calls Repository
-```
-
-**Architecture Pattern**: Clean Architecture with three layers:
-- **Presentation**: `lib/presentation/screens/` + GetX controllers in `lib/domain/controllers/`
-- **Domain**: Business logic in `lib/domain/use_cases/`
-- **Data**: Repositories in `lib/data/repositories/` and DAOs in `lib/data/local_database/`
-
-**Key Architecture Components**:
-- **Models**: `Parameter` and `DailyRecord` classes in `lib/models/`
-- **Database**: SQLite via `DatabaseHelper` with version-controlled migrations
-- **Dependency Injection**: Centralized in `main.dart` using GetX `AppBindings`
-- **State Management**: Reactive variables with GetX `.obs` and `.update()`
-
-## Key Technical Details
-
-- **Database**: SQLite with `sqflite` package
-- **State Management**: GetX (already configured in `main.dart`)
-- **Data Types Supported**: Number, Text, Rating, Yes/No, Time, Date
-- **Main Models**: Parameter (parameter definitions), DailyRecord (daily entries)
-
-## Workflow Instructions
-
-**YOU MUST follow this sequence when making changes:**
-
-1. **Read and understand code first** - explore relevant files before making changes
-2. **Make incremental changes** - implement one feature at a time
-3. **Test after each change** - run `flutter run` to verify functionality
-4. **Commit frequently** - use descriptive commit messages
-5. **Use TDD approach** - write tests first when possible
-
-## Database Schema Notes
-
-**Current Schema (v4)**:
-```sql
--- Parameters table stores parameter definitions  
-CREATE TABLE parameters (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL,
-  data_type TEXT NOT NULL, -- Number, Text, Rating, YesNo (Date/Time removed)
-  unit TEXT,
-  scale_options TEXT -- JSON array for Rating scales
-);
-
--- Daily records table stores user entries
-CREATE TABLE daily_records (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  date TEXT NOT NULL, -- ISO 8601 date format
-  dataValues TEXT NOT NULL, -- JSON map of parameter_id -> value
-  comments TEXT -- JSON map of parameter_id -> comment
-);
-```
-
-**Important Notes**:
-- Database migrations handled in `DatabaseHelper._onUpgrade()` 
-- DailyRecord stores all parameter values for a date in single JSON fields
-- Parameter types limited to: Number, Text, Rating, YesNo (Date/Time removed per requirements)
-
-## UI/UX Guidelines
-
-- **Material Design 3**: Use modern elevation, colors, and typography
-- **Responsive design**: Ensure UI works on different screen sizes
-- **Accessibility**: Proper contrast ratios and semantic widgets
-- **Animations**: Use smooth transitions between screens (Hero animations, fade transitions)
-- **User feedback**: Show loading states, success/error messages via SnackBars
-
-## File Locations to Focus On
-
-- **Data Entry Screen**: `lib/presentation/screens/data_entry/` or similar
-- **Parameter Models**: `lib/models/parameter.dart`
-- **Database Helper**: `lib/data/database_helper.dart`
-- **Controllers**: `lib/domain/controllers/`
-- **Theme Configuration**: `lib/presentation/theme/` (create if doesn't exist)
-
-## Important Warnings
-
-- **ALWAYS test changes** with `flutter run` before proceeding to next task
-- **Database migrations**: When changing schema, implement proper migration logic
-- **GetX reactive variables**: Use `.obs` for reactive state and `.update()` to trigger UI updates
-- **Async operations**: Always handle Future/async operations properly with try-catch blocks
-
-## Dependencies Already Available
-
-```yaml
-get: ^4.6.5              # State management - USE THIS for controllers
-sqflite: ^2.0.0          # Database - for schema changes
-path_provider: ^2.0.14   # File paths
-share_plus: ^7.2.1       # Sharing functionality  
-intl: ^0.18.0           # Date/time formatting
-flutter_lints: ^5.0.0   # Code quality - follow linting suggestions
-```
-
-## Development Tips
-
-- **Hot reload**: Save files to see changes instantly during `flutter run`
-- **Debug console**: Check debug output for errors and print statements
-- **Use descriptive variable names**: `isLastParameter` not `isLast`
-- **Error handling**: Wrap database operations in try-catch blocks
-- **Performance**: Avoid rebuilding entire UI - use GetX selective updates
-
-## Testing Strategy
-
-```bash
-# Test specific functionality
-flutter test test/models/           # Test data models
-flutter test test/controllers/      # Test business logic
-flutter test test/database/         # Test database operations
-
-# Integration testing
-flutter run --debug                 # Manual testing with hot reload
-```
-## Project Structure
-
-lib/
-├── main.dart                    # App entry point with dependency injection
-├── models/                      # Data models (Parameter, DailyRecord)
-├── data/                        # Data layer
-│   ├── database_helper.dart     # SQLite database setup and migrations
-│   ├── local_database/          # DAOs for database operations
-│   └── repositories/            # Repository implementations
-├── domain/                      # Business logic layer
-│   ├── controllers/             # GetX controllers
-│   └── use_cases/              # Business use cases
-├── presentation/               # UI layer
-│   └── screens/               # Flutter screens/pages
-└── utils/                     # Utility classes (CSV export, etc.)
 </file>
 
 <file path="lib/data/local_database/parameter_dao.dart">
@@ -5531,21 +5534,25 @@ class Parameter {
 }
 </file>
 
-<file path="lib/presentation/screens/parameter_list_screen.dart">
+<file path="lib/presentation/screens/parameter_create_screen.dart">
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../domain/controllers/parameter_controller.dart';
 import '../../models/parameter.dart';
-import 'parameter_create_screen.dart';
-import 'parameter_edit_screen.dart';
+import '../../domain/controllers/parameter_controller.dart';
 import '../theme/app_theme.dart';
-import '../animations/page_transitions.dart';
-import '../../utils/parameter_icons.dart';
 
-class ParameterListScreen extends StatelessWidget {
-  ParameterListScreen({Key? key}) : super(key: key);
+class ParameterCreateScreen extends StatefulWidget {
+  const ParameterCreateScreen({Key? key}) : super(key: key);
 
-  final ParameterController _parameterController = Get.find();
+  @override
+  State<ParameterCreateScreen> createState() => _ParameterCreateScreenState();
+}
+class _ParameterCreateScreenState extends State<ParameterCreateScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _parameterController = Get.find<ParameterController>();
+  String _parameterName = '';
+  String? _dataType;
+  String _unit = '';
 
   @override
   Widget build(BuildContext context) {
@@ -5554,259 +5561,115 @@ class ParameterListScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: theme.colorScheme.background,
       appBar: AppBar(
-        title: const Text('Управление параметрами'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            tooltip: 'Создать параметр',
-            onPressed: () => Navigator.of(context).pushWithTransition(
-              const ParameterCreateScreen(),
-              transition: PageTransitionType.slideFromBottom,
-            ),
-          ),
-        ],
+        title: const Text('Создать параметр'),
       ),
-      body: Obx(() {
-        if (!_parameterController.isParametersLoaded.value) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const CircularProgressIndicator(),
-                const SizedBox(height: 16),
-                Text(
-                  'Загрузка параметров...',
-                  style: theme.textTheme.bodyMedium,
-                ),
-              ],
-            ),
-          );
-        } else if (_parameterController.parameters.isEmpty) {
-          return Center(
-            child: Padding(
-              padding: AppTheme.pagePadding,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.tune,
-                    size: 80,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Пока нет параметров',
-                    style: theme.textTheme.headlineSmall,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Создайте первый параметр для отслеживания ваших данных',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 32),
-                  ElevatedButton.icon(
-                    onPressed: () => Navigator.of(context).pushWithTransition(
-                      const ParameterCreateScreen(),
-                      transition: PageTransitionType.slideFromBottom,
-                    ),
-                    icon: const Icon(Icons.add),
-                    label: const Text('Создать первый параметр'),
-                  ),
-                ],
-              ),
-            ),
-          );
-        } else {
-          // Единый список всех параметров
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 80), // Отступ для FAB
-            child: ReorderableListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _parameterController.parameters.length,
-              onReorder: (oldIndex, newIndex) async {
-                if (newIndex > oldIndex) {
-                  newIndex -= 1;
-                }
-                
-                final reorderedParams = List<Parameter>.from(_parameterController.parameters);
-                final parameter = reorderedParams.removeAt(oldIndex);
-                reorderedParams.insert(newIndex, parameter);
-                
-                // Обновляем sort_order для всех параметров
-                await _parameterController.reorderAllParameters(reorderedParams);
-              },
-              itemBuilder: (context, index) {
-                final parameter = _parameterController.parameters[index];
-                return _buildParameterTile(context, parameter, theme, index);
-              },
-            ),
-          );
-        }
-      }),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Navigator.of(context).pushWithTransition(
-          const ParameterCreateScreen(),
-          transition: PageTransitionType.slideFromBottom,
-        ),
-        icon: const Icon(Icons.add),
-        label: const Text('Добавить'),
-      ),
-    );
-  }
-
-  // Единый виджет для всех параметров
-  Widget _buildParameterTile(BuildContext context, Parameter parameter, ThemeData theme, int index) {
-    return Card(
-      key: ValueKey(parameter.id),
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      child: InkWell(
-        onTap: () => Navigator.of(context).pushWithTransition(
-          ParameterEditScreen(parameter: parameter),
-          transition: PageTransitionType.slideAndFade,
-        ),
-        borderRadius: BorderRadius.circular(AppTheme.cardBorderRadius),
-        child: Padding(
-          padding: AppTheme.cardPadding,
-          child: Row(
-            children: [
-              // Drag handle + Иконка
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.drag_handle,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: 8),
-                  ParameterIcons.buildParameterIcon(
-                    parameter,
-                    context,
-                    size: 24.0,
-                    padding: 12.0,
-                  ),
-                ],
-              ),
-              const SizedBox(width: 16),
-              // Основная информация
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      parameter.name,
-                      style: theme.textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 4),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 4,
-                      children: [
-                        Chip(
-                          label: Text(
-                            parameter.dataType,
-                            style: theme.textTheme.bodySmall,
+      body: SingleChildScrollView(
+        padding: AppTheme.pagePadding,
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Card(
+                child: Padding(
+                  padding: AppTheme.cardPadding,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.tune,
+                            color: theme.colorScheme.primary,
+                            size: 24,
                           ),
-                          backgroundColor: theme.colorScheme.secondaryContainer,
-                          side: BorderSide.none,
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Информация о параметре',
+                            style: theme.textTheme.titleLarge,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      TextFormField(
+                        decoration: InputDecoration(
+                          labelText: 'Название параметра',
+                          hintText: 'Например: Вес, Настроение, Сон',
+                          prefixIcon: const Icon(Icons.label_outline),
                         ),
-                        if (parameter.isPreset)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.primaryContainer,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Пожалуйста, введите название параметра';
+                          }
+                          return null;
+                        },
+                        onSaved: (value) {
+                          _parameterName = value!;
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      DropdownButtonFormField<String>(
+                        decoration: InputDecoration(
+                          labelText: 'Тип данных',
+                          hintText: 'Выберите тип',
+                          prefixIcon: const Icon(Icons.category_outlined),
+                        ),
+                        value: _dataType,
+                        items: <String>['Число', 'Текст', 'Оценка', 'Да/Нет']
+                            .map<DropdownMenuItem<String>>((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
                             child: Row(
-                              mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
-                                  Icons.star,
-                                  size: 12,
-                                  color: theme.colorScheme.onPrimaryContainer,
+                                  _getTypeIcon(value),
+                                  size: 20,
+                                  color: theme.colorScheme.onSurfaceVariant,
                                 ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'Пресет',
-                                  style: theme.textTheme.labelSmall?.copyWith(
-                                    color: theme.colorScheme.onPrimaryContainer,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
+                                const SizedBox(width: 12),
+                                Text(value),
                               ],
                             ),
-                          ),
-                        if (parameter.unit != null && parameter.unit!.isNotEmpty)
-                          Chip(
-                            label: Text(
-                              parameter.unit!,
-                              style: theme.textTheme.bodySmall,
-                            ),
-                            backgroundColor: theme.colorScheme.surfaceVariant,
-                            side: BorderSide.none,
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              // Кнопки управления
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Переключатель активности
-                  Switch(
-                    value: parameter.isEnabled,
-                    onChanged: (value) async {
-                      await _parameterController.toggleParameterEnabled(parameter.id!, value);
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                  // Меню действий
-                  PopupMenuButton<String>(
-                    onSelected: (value) {
-                      if (value == 'edit') {
-                        Navigator.of(context).pushWithTransition(
-                          ParameterEditScreen(parameter: parameter),
-                          transition: PageTransitionType.slideAndFade,
-                        );
-                      } else if (value == 'delete') {
-                        _showDeleteConfirmationDialog(context, parameter);
-                      }
-                    },
-                    itemBuilder: (context) => [
-                      PopupMenuItem(
-                        value: 'edit',
-                        child: Row(
-                          children: [
-                            Icon(Icons.edit, color: theme.colorScheme.primary),
-                            const SizedBox(width: 12),
-                            const Text('Редактировать'),
-                          ],
-                        ),
+                          );
+                        }).toList(),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Пожалуйста, выберите тип данных';
+                          }
+                          return null;
+                        },
+                        onChanged: (String? newValue) {
+                          setState(() {
+                            _dataType = newValue;
+                          });
+                        },
+                        onSaved: (value) {
+                          _dataType = value;
+                        },
                       ),
-                      if (!parameter.isPreset) // Только для пользовательских параметров
-                        PopupMenuItem(
-                          value: 'delete',
-                          child: Row(
-                            children: [
-                              Icon(Icons.delete, color: theme.colorScheme.error),
-                              const SizedBox(width: 12),
-                              const Text('Удалить'),
-                            ],
-                          ),
+                      const SizedBox(height: 20),
+                      TextFormField(
+                        decoration: InputDecoration(
+                          labelText: 'Единица измерения (опционально)',
+                          hintText: 'кг, см, баллы, часы и т.д.',
+                          prefixIcon: const Icon(Icons.straighten),
                         ),
+                        onSaved: (value) {
+                          _unit = value ?? '';
+                        },
+                      ),
                     ],
                   ),
-                ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _saveParameter,
+                  icon: const Icon(Icons.save),
+                  label: const Text('Создать параметр'),
+                ),
               ),
             ],
           ),
@@ -5815,99 +5678,64 @@ class ParameterListScreen extends StatelessWidget {
     );
   }
 
-  void _showDeleteConfirmationDialog(BuildContext context, Parameter parameter) {
+  void _saveParameter() async {
     final theme = Theme.of(context);
-    
-    // Проверяем, что это не пресет параметр
-    if (parameter.isPreset) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Встроенные параметры нельзя удалить. Вы можете их отключить.'),
-          backgroundColor: theme.colorScheme.errorContainer,
-          behavior: SnackBarBehavior.floating,
-        ),
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+      // Parameter creation data processed
+
+      final newParameter = Parameter(
+        name: _parameterName,
+        dataType: _dataType!,
+        unit: _unit.isEmpty ? null : _unit,
       );
-      return;
-    }
-    
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          icon: Icon(
-            Icons.warning_amber_rounded,
-            color: theme.colorScheme.error,
-            size: 32,
+
+      try {
+        await _parameterController.createParameter(newParameter);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Параметр "$_parameterName" создан успешно!'),
+            backgroundColor: theme.colorScheme.primaryContainer,
+            behavior: SnackBarBehavior.floating,
           ),
-          title: const Text('Удалить параметр?'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Вы уверены, что хотите удалить параметр "${parameter.name}"?',
-                style: theme.textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Все связанные данные будут потеряны навсегда. Это действие нельзя отменить.',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Отмена'),
-            ),
-            FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: theme.colorScheme.error,
-                foregroundColor: theme.colorScheme.onError,
-              ),
-              onPressed: () async {
-                Navigator.of(context).pop();
-                
-                // Показываем индикатор загрузки
-                showDialog(
-                  context: context,
-                  barrierDismissible: false,
-                  builder: (context) => const Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                );
-                
-                try {
-                  await _parameterController.deleteParameter(parameter.id!);
-                  Navigator.of(context).pop(); // Закрыть loading
-                  
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Параметр "${parameter.name}" удален'),
-                      backgroundColor: theme.colorScheme.primaryContainer,
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                } catch (e) {
-                  Navigator.of(context).pop(); // Закрыть loading
-                  
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Ошибка удаления: ${e.toString()}'),
-                      backgroundColor: theme.colorScheme.error,
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                }
-              },
-              child: const Text('Удалить'),
-            ),
-          ],
         );
-      },
-    );
+
+        _formKey.currentState!.reset();
+        setState(() {
+          _dataType = null;
+          _parameterName = '';
+          _unit = '';
+        });
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ошибка при сохранении: $e'),
+            backgroundColor: theme.colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+  
+  IconData _getTypeIcon(String dataType) {
+    switch (dataType.toLowerCase()) {
+      case 'число':
+        return Icons.numbers;
+      case 'текст':
+        return Icons.text_fields;
+      case 'оценка':
+        return Icons.star_rate;
+      case 'да/нет':
+        return Icons.check_box;
+      case 'время':
+        return Icons.access_time;
+      case 'дата':
+        return Icons.date_range;
+      default:
+        return Icons.tune;
+    }
   }
 }
 </file>
@@ -6028,6 +5856,312 @@ class CsvExporter {
     }
   }
 }
+</file>
+
+<file path="CLAUDE.md">
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+BioLogger is a Flutter application for tracking personal metrics and life quality data. Users define custom parameters (Sleep Hours, Mood, etc.), log daily progress, and export data to CSV format.
+
+## Essential Commands
+
+```bash
+# Development workflow
+flutter pub get              # Install dependencies - ALWAYS run first after changes
+flutter run                  # Run on connected device/simulator
+flutter run --debug         # Debug mode with hot reload (recommended)
+flutter analyze             # Static analysis and linting - run before commits
+flutter test                 # Run all unit/widget tests
+flutter clean               # Clean build artifacts if build issues occur
+
+# Testing specific areas
+flutter test test/models/           # Test data models
+flutter test test/controllers/      # Test business logic controllers
+flutter test test/presentation/     # Test UI components and screens
+flutter test test/data/            # Test database operations
+flutter test test/domain/use_cases/ # Test business use cases
+
+# Build commands
+flutter build apk --debug     # Debug APK for testing
+flutter build apk --release   # Production APK
+
+# Hot reload during development
+r                             # Hot reload (in flutter run console)
+R                             # Hot restart (in flutter run console)
+```
+
+## ПРИОРИТЕТ: Исправление UI/UX багов (Август 2025)
+
+**ЗАДАЧА 1: Постоянная нижняя навигация (BottomNavigationBar)**
+- **Проблема:** Экран "Управление параметрами" (`ParameterListScreen`) открывается поверх `MainNavigationScreen`, скрывая нижнюю панель навигации (см. скриншот 1).
+- **Решение:** Рефакторинг навигации. `ParameterListScreen` не должен открываться как новый `Route`. Вместо этого, он должен отображаться **внутри** `MetricsScreen` (вкладка "Данные"), заменяя его содержимое. Это сохранит `Scaffold` и `BottomNavigationBar` от `MainNavigationScreen`.
+- **Затронутые файлы:**
+  - `lib/presentation/screens/metrics_screen.dart`
+  - `lib/presentation/screens/parameter_list_screen.dart`
+  - `lib/presentation/screens/main_navigation_screen.dart` (для возможного создания нового контроллера)
+
+**ЗАДАЧА 2: Проблемы с клавиатурой на экране ввода данных**
+- **Проблема 1:** На экране ввода данных клавиатура перекрывает поля ввода и комментариев, так как контент не прокручивается (см. скриншот 3).
+- **Решение 1:** Обернуть содержимое страницы ввода данных в `SingleChildScrollView`, чтобы обеспечить прокрутку.
+- **Проблема 2:** Клавиатура автоматически появляется для параметров типа "Rating", где она не нужна (см. скриншот 2).
+- **Решение 2:** Реализовать логику, которая будет убирать фокус (`unfocus`) с текстовых полей, когда текущий параметр не требует клавиатуры (например, 'Rating' или 'YesNo').
+- **Затронутый файл:** `lib/presentation/screens/data_entry_screen.dart`
+
+**ЗАДАЧА 3: UI-дефект на экране создания параметра**
+- **Проблема:** Текст-подсказка "Выберите тип данных" слишком длинный и выходит за границы поля (см. скриншот 4).
+- **Решение:** Сократить или полностью убрать `hintText` в `DropdownButtonFormField`, оставив только `labelText`.
+- **Затронутый файл:** `lib/presentation/screens/parameter_create_screen.dart`
+
+**ЗАДАЧА 4: УДАЛИТЬ типы полей:** 
+- Date и Time (оставить Number, Text, Rating, Yes/No)
+
+**УДАЛИТЬ типы полей:** Date и Time (оставить Number, Text, Rating, Yes/No)
+
+## Architecture & Technical Stack
+
+**Framework**: Flutter with Material Design 3  
+**State Management**: GetX (reactive programming with `.obs` variables)  
+**Database**: SQLite via `sqflite` package with versioned migrations  
+**Architecture**: Clean Architecture with three distinct layers
+
+### Architecture Layers
+
+**1. Presentation Layer** (`lib/presentation/`)
+- Screens: UI components and pages
+- Widgets: Reusable UI components (calendar, forms)
+- Theme: Material Design 3 configuration
+
+**2. Domain Layer** (`lib/domain/`)
+- Controllers: GetX controllers managing UI state and business logic
+- Use Cases: Business logic operations (CRUD, calculations, export)
+- Services: Application services (preset parameters initialization)
+
+**3. Data Layer** (`lib/data/`)
+- DatabaseHelper: SQLite connection, schema creation, migrations
+- DAOs: Data Access Objects for database operations
+- Repositories: Abstract interfaces and concrete implementations
+
+### Key Technical Patterns
+
+```dart
+// GetX State Management
+class MyController extends GetxController {
+  var isLoading = false.obs;        // Reactive variables
+  var dataList = <Model>[].obs;     // Observable collections
+  
+  Future<void> loadData() async {
+    isLoading.value = true;         // Triggers UI update
+    // ... business logic
+    isLoading.value = false;
+  }
+}
+
+// Clean Architecture Flow
+// UI -> Controller -> UseCase -> Repository -> DAO -> Database
+```
+
+### Dependency Injection
+- Centralized in `main.dart` using `AppBindings`
+- Lazy initialization with `Get.lazyPut()` and `fenix: true`
+- Controllers, repositories, and use cases auto-injected
+
+## Database Schema (Current Version 5)
+
+**Parameters Table** - Stores parameter definitions
+```sql
+CREATE TABLE parameters (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,                    -- Parameter name
+  data_type TEXT NOT NULL,               -- Number, Text, Rating, YesNo
+  unit TEXT,                            -- Optional unit (e.g. "hours", "kg")
+  scale_options TEXT,                   -- JSON array for Rating scales
+  is_preset INTEGER DEFAULT 0,          -- 1 if preset parameter
+  is_enabled INTEGER DEFAULT 1,         -- 1 if enabled/active
+  sort_order INTEGER DEFAULT 0,         -- Display order
+  icon_name TEXT                        -- Icon name for presets
+);
+```
+
+**Daily Records Table** - Stores daily entries
+```sql
+CREATE TABLE daily_records (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  date TEXT NOT NULL,                   -- ISO 8601 date format
+  dataValues TEXT NOT NULL,            -- JSON map {parameter_id: value}
+  comments TEXT                        -- JSON map {parameter_id: comment}
+);
+```
+
+**Supported Data Types**: `Number`, `Text`, `Rating`, `YesNo` (Date/Time removed per requirements)
+
+**Migration System**: Automated schema upgrades in `DatabaseHelper._onUpgrade()`
+
+## Development Workflow
+
+**CRITICAL: Always follow this sequence when making changes:**
+
+1. **Run `flutter pub get`** - Ensure dependencies are current
+2. **Understand the codebase** - Read relevant files before making changes
+3. **Make incremental changes** - Implement one feature at a time
+4. **Test immediately** - Run `flutter run --debug` after each change
+5. **Run static analysis** - Execute `flutter analyze` before commits
+6. **Test functionality** - Use manual testing and automated tests
+7. **Commit with descriptive messages** - Follow conventional commit format
+
+**Key Rules:**
+- NEVER skip `flutter analyze` - it catches critical issues early
+- ALWAYS test on a real device/simulator, not just analysis
+- Use hot reload (`r`) during development for faster iteration
+- Run full test suite with `flutter test` before major commits
+
+## Core Data Models
+
+**Parameter Model** (`lib/models/parameter.dart`)
+```dart
+class Parameter {
+  final int? id;
+  final String name;              // Parameter name
+  final String dataType;         // Number, Text, Rating, YesNo
+  final String? unit;             // Optional unit
+  final List<String>? scaleOptions; // For Rating type
+  final bool isPreset;            // True for default parameters
+  final bool isEnabled;           // Can be disabled without deletion
+  final int sortOrder;            // Display order
+  final String? iconName;         // Icon for preset parameters
+  final DateTime createdAt;
+}
+```
+
+**DailyRecord Model** (`lib/models/daily_record.dart`)
+```dart
+class DailyRecord {
+  final int? id;
+  final DateTime date;
+  final Map<String, dynamic> dataValues;  // {parameter_id: value}
+  final Map<String, String> comments;     // {parameter_id: comment}
+}
+```
+
+**Preset Parameters System**
+- 15 default parameters created automatically on first launch
+- Managed by `PresetParametersService` in `lib/domain/services/`
+- Icons from Material Design (bedtime, medication, work, etc.)
+- Cannot be deleted, only disabled via `is_enabled` flag
+
+## Key Controllers & Their Responsibilities
+
+**HomeController** (`lib/domain/controllers/home_controller.dart`)
+- Calendar logic and date selection
+- Streak calculations and monthly statistics
+- Manages filled dates and counters
+- Reactive variables: `selectedDate`, `currentMonth`, `filledDates`, `consecutiveDays`
+
+**DataEntryController** (`lib/domain/controllers/data_entry_controller.dart`)
+- Data input flow management
+- Parameter value collection and validation
+- Integration with HomeController for date synchronization
+
+**ParameterController** (`lib/domain/controllers/parameter_controller.dart`)
+- Parameter CRUD operations
+- Preset parameter management
+- Parameter enabling/disabling
+
+**DailyRecordController** (`lib/domain/controllers/daily_record_controller.dart`)
+- Daily record CRUD operations
+- CSV export functionality
+- Data sharing capabilities
+
+## Critical File Locations
+
+**Core Logic:**
+- `lib/data/database_helper.dart` - SQLite setup and migrations
+- `lib/domain/services/preset_parameters_service.dart` - Default parameters
+- `lib/utils/csv_exporter.dart` - Data export functionality
+
+**UI Components:**
+- `lib/presentation/screens/main_navigation_screen.dart` - Main app navigation
+- `lib/presentation/widgets/calendar_widget.dart` - Calendar component
+- `lib/presentation/screens/data_entry_screen.dart` - Data input interface
+- `lib/presentation/theme/app_theme.dart` - Material Design 3 configuration
+
+## Dependencies & Packages
+
+**Core Dependencies** (already configured in `pubspec.yaml`):
+```yaml
+flutter: sdk                    # Flutter framework
+get: ^4.6.5                    # State management (USE THIS)
+sqflite: ^2.0.0               # SQLite database
+path_provider: ^2.0.14        # File system access
+share_plus: ^7.2.1           # Native sharing capabilities
+intl: ^0.18.0                # Internationalization/date formatting
+cupertino_icons: ^1.0.8      # iOS-style icons
+
+# Dev dependencies
+flutter_lints: ^5.0.0        # Static analysis rules
+sqflite_common_ffi: ^2.0.0   # SQLite testing support
+```
+
+**NEVER add new dependencies without checking if existing ones can be used**
+
+## Critical Development Guidelines
+
+**Database Operations:**
+- Always use try-catch blocks around database operations
+- Test database migrations with version upgrades
+- Use proper transaction handling for bulk operations
+
+**GetX State Management:**
+- Use `.obs` for reactive variables that trigger UI updates
+- Call `.update()` on complex objects to notify listeners
+- Avoid rebuilding entire UI - use selective GetX updates
+
+**Error Handling:**
+```dart
+try {
+  await databaseOperation();
+} catch (e) {
+  print('Operation failed: $e');
+  // Show user-friendly error message
+}
+```
+
+**Performance Tips:**
+- Use `Get.lazyPut()` for dependency injection to avoid unnecessary initialization
+- Implement proper loading states with reactive variables
+- Use `Obx()` widgets for targeted UI updates, not `GetBuilder()`
+
+## Testing Strategy & Project Structure
+
+**Testing Areas:**
+- `test/models/` - Data model validation and serialization
+- `test/controllers/` - Business logic and state management  
+- `test/data/` - Database operations and DAOs
+- `test/domain/use_cases/` - Business use cases
+- `test/presentation/` - UI components and screens
+
+**Project Structure:**
+```
+lib/
+├── main.dart                    # App entry + dependency injection
+├── models/                      # Parameter, DailyRecord models
+├── data/                        # Data access layer
+│   ├── database_helper.dart     # SQLite setup & migrations
+│   ├── local_database/          # DAOs for database ops
+│   └── repositories/            # Repository pattern implementation
+├── domain/                      # Business logic layer  
+│   ├── controllers/             # GetX controllers
+│   ├── use_cases/              # Business operations
+│   └── services/               # Application services
+├── presentation/               # UI layer
+│   ├── screens/               # App screens/pages
+│   ├── widgets/               # Reusable components
+│   └── theme/                 # Material Design 3 theme
+└── utils/                     # Utilities (CSV export, etc.)
+```
 </file>
 
 <file path="lib/data/database_helper.dart">
@@ -6396,252 +6530,6 @@ class ParameterController extends GetxController {
 }
 </file>
 
-<file path="lib/presentation/screens/parameter_edit_screen.dart">
-// lib/presentation/screens/parameter_edit_screen.dart
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import '../../models/parameter.dart';
-import '../../domain/controllers/parameter_controller.dart';
-import '../theme/app_theme.dart';
-
-class ParameterEditScreen extends StatefulWidget {
-  final Parameter parameter; // Принимаем параметр для редактирования
-
-  const ParameterEditScreen({Key? key, required this.parameter}) : super(key: key);
-
-  @override
-  State<ParameterEditScreen> createState() => _ParameterEditScreenState();
-}
-
-class _ParameterEditScreenState extends State<ParameterEditScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _parameterController = Get.find<ParameterController>();
-
-  // Используем TextEditingController для предзаполнения полей
-  late TextEditingController _nameController;
-  late TextEditingController _unitController;
-  String? _dataType; // Тип данных как и раньше
-
-  @override
-  void initState() {
-    super.initState();
-    // Инициализируем контроллеры и тип данных значениями из widget.parameter
-    _nameController = TextEditingController(text: widget.parameter.name);
-    _unitController = TextEditingController(text: widget.parameter.unit ?? '');
-    _dataType = _mapDataTypeToDisplay(widget.parameter.dataType);
-  }
-  
-  // Маппинг типов данных из базы в отображаемые значения
-  String _mapDataTypeToDisplay(String dbType) {
-    switch (dbType) {
-      case 'Number': return 'Число';
-      case 'Text': return 'Текст';
-      case 'Rating': return 'Оценка';
-      case 'YesNo': return 'Да/Нет';
-      case 'Time': return 'Время';
-      case 'Date': return 'Дата';
-      default: return 'Число';
-    }
-  }
-  
-  // Маппинг отображаемых значений в типы базы данных
-  String _mapDisplayToDataType(String displayType) {
-    switch (displayType) {
-      case 'Число': return 'Number';
-      case 'Текст': return 'Text';
-      case 'Оценка': return 'Rating';
-      case 'Да/Нет': return 'YesNo';
-      case 'Время': return 'Time';
-      case 'Дата': return 'Date';
-      default: return 'Number';
-    }
-  }
-
-  @override
-  void dispose() {
-    // Не забываем очищать контроллеры
-    _nameController.dispose();
-    _unitController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    
-    return Scaffold(
-      backgroundColor: theme.colorScheme.background,
-      appBar: AppBar(
-        title: const Text('Редактировать параметр'),
-      ),
-      body: SingleChildScrollView(
-        padding: AppTheme.pagePadding,
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              Card(
-                child: Padding(
-                  padding: AppTheme.cardPadding,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.edit,
-                            color: theme.colorScheme.primary,
-                            size: 24,
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            'Редактирование параметра',
-                            style: theme.textTheme.titleLarge,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      TextFormField(
-                        controller: _nameController,
-                        decoration: InputDecoration(
-                          labelText: 'Название параметра',
-                          hintText: 'Например: Вес, Настроение, Сон',
-                          prefixIcon: const Icon(Icons.label_outline),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Пожалуйста, введите название параметра';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 20),
-                      DropdownButtonFormField<String>(
-                        decoration: InputDecoration(
-                          labelText: 'Тип данных',
-                          hintText: 'Выберите тип данных для параметра',
-                          prefixIcon: const Icon(Icons.category_outlined),
-                        ),
-                        value: _dataType,
-                        items: <String>['Число', 'Текст', 'Оценка', 'Да/Нет', 'Время', 'Дата']
-                            .map<DropdownMenuItem<String>>((String value) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Row(
-                              children: [
-                                Icon(
-                                  _getTypeIcon(value),
-                                  size: 20,
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
-                                const SizedBox(width: 12),
-                                Text(value),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Пожалуйста, выберите тип данных';
-                          }
-                          return null;
-                        },
-                        onChanged: (String? newValue) {
-                          setState(() {
-                            _dataType = newValue;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 20),
-                      TextFormField(
-                        controller: _unitController,
-                        decoration: InputDecoration(
-                          labelText: 'Единица измерения (опционально)',
-                          hintText: 'кг, см, баллы, часы и т.д.',
-                          prefixIcon: const Icon(Icons.straighten),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _updateParameter,
-                  icon: const Icon(Icons.save),
-                  label: const Text('Сохранить изменения'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _updateParameter() async {
-    final theme = Theme.of(context);
-    if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save(); // Хотя save здесь не обязателен с контроллерами
-
-      final updatedName = _nameController.text;
-      final updatedUnit = _unitController.text;
-
-      // Создаем обновленный объект Parameter, используя ID из исходного параметра
-      final updatedParameter = widget.parameter.copyWith(
-        name: updatedName,
-        dataType: _mapDisplayToDataType(_dataType!), // Преобразуем обратно в тип базы данных
-        unit: updatedUnit.isEmpty ? null : updatedUnit,
-        // scaleOptions пока не редактируем, но можно добавить логику и для них
-      );
-
-      try {
-        await _parameterController.updateParameter(updatedParameter);
-
-        Get.back(); // Возвращаемся на предыдущий экран (список)
-
-        Get.snackbar( // Показываем снэкбар уже на экране списка
-          'Успех',
-          'Параметр "${updatedParameter.name}" успешно обновлен!',
-          snackPosition: SnackPosition.BOTTOM
-        );
-
-      } catch (e) {
-         ScaffoldMessenger.of(context).showSnackBar(
-           SnackBar(
-             content: Text('Ошибка при обновлении: $e'),
-             backgroundColor: theme.colorScheme.error,
-             behavior: SnackBarBehavior.floating,
-           ),
-         );
-      }
-    }
-  }
-  
-  IconData _getTypeIcon(String dataType) {
-    switch (dataType.toLowerCase()) {
-      case 'число':
-        return Icons.numbers;
-      case 'текст':
-        return Icons.text_fields;
-      case 'оценка':
-        return Icons.star_rate;
-      case 'да/нет':
-        return Icons.check_box;
-      case 'время':
-        return Icons.access_time;
-      case 'дата':
-        return Icons.date_range;
-      default:
-        return Icons.tune;
-    }
-  }
-}
-</file>
-
 <file path=".gitignore">
 # Miscellaneous
 *.class
@@ -6902,6 +6790,659 @@ class DataEntryController extends GetxController {
 }
 </file>
 
+<file path="lib/presentation/screens/home_screen.dart">
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../../domain/controllers/home_controller.dart';
+import '../../domain/controllers/data_entry_controller.dart';
+import '../widgets/calendar_widget.dart';
+import 'main_navigation_screen.dart';
+
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final HomeController controller = Get.find();
+    final theme = Theme.of(context);
+    
+    return Scaffold(
+      backgroundColor: theme.colorScheme.surface,
+      appBar: AppBar(
+        title: const Text('BioLogger'),
+        centerTitle: true,
+        elevation: 0,
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: Colors.white,
+      ),
+      body: Column(
+        children: [
+          // Календарный виджет (без скроллинга)
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  // Календарный виджет
+                  Expanded(
+                    child: Obx(() => CalendarWidget(
+                      selectedDate: controller.selectedDate.value,
+                      filledDates: controller.filledDates.value,
+                      onDateSelected: controller.selectDate,
+                      onMonthChanged: controller.changeMonth,
+                      displayMonth: controller.currentMonth.value,
+                    )),
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Компактная статистика дней подряд
+                  _buildCompactStats(controller, theme),
+                ],
+              ),
+            ),
+          ),
+          
+          // Динамическая кнопка внизу
+          _buildActionButton(context, controller, theme),
+        ],
+      ),
+    );
+  }
+
+  /// Создает компактную статистику дней подряд
+  Widget _buildCompactStats(HomeController controller, ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      decoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(color: Colors.grey.shade300, width: 1),
+        ),
+      ),
+      child: Column(
+        children: [
+          // Заголовок
+          Text(
+            'Серии заполнений:',
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: theme.colorScheme.onSurface.withOpacity(0.8),
+            ),
+          ),
+          const SizedBox(height: 12),
+          
+          // Счетчики
+          Obx(() => Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              // Дни подряд
+              Column(
+                children: [
+                  Text(
+                    '${controller.consecutiveDays.value}',
+                    style: theme.textTheme.headlineLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF87A96B), // Sage green
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Дней подряд',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ],
+              ),
+              
+              // Дни в месяце
+              Column(
+                children: [
+                  Text(
+                    '${controller.monthlyFilledDays.value}',
+                    style: theme.textTheme.headlineLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF87A96B), // Sage green
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Дней в этом месяце',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          )),
+        ],
+      ),
+    );
+  }
+
+  /// Создает информацию о выбранной дате
+  Widget _buildSelectedDateInfo(HomeController controller, ThemeData theme) {
+    return Obx(() {
+      final selectedDate = controller.selectedDate.value;
+      final isToday = controller.isSelectedDateToday;
+      final isFilled = controller.isSelectedDateFilled;
+      final isInFuture = controller.isSelectedDateInFuture;
+      
+      String statusText;
+      Color statusColor;
+      IconData statusIcon;
+      
+      if (isInFuture) {
+        statusText = 'Будущий день';
+        statusColor = theme.colorScheme.onSurface.withOpacity(0.6);
+        statusIcon = Icons.schedule;
+      } else if (isFilled) {
+        statusText = 'День заполнен';
+        statusColor = Colors.green;
+        statusIcon = Icons.check_circle;
+      } else {
+        statusText = 'Данные не введены';
+        statusColor = theme.colorScheme.error;
+        statusIcon = Icons.radio_button_unchecked;
+      }
+      
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Text(
+                'Выбранный день',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                ),
+              ),
+              const SizedBox(height: 8),
+              
+              // Дата
+              Text(
+                _formatDate(selectedDate),
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+              
+              if (isToday) ...[
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    'Сегодня',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+              
+              const SizedBox(height: 12),
+              
+              // Статус дня
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    statusIcon,
+                    color: statusColor,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    statusText,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: statusColor,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    });
+  }
+
+  /// Создает динамическую кнопку действия
+  Widget _buildActionButton(BuildContext context, HomeController controller, ThemeData theme) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        border: Border(
+          top: BorderSide(
+            color: theme.colorScheme.outline.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
+      ),
+      child: SafeArea(
+        child: Obx(() {
+          final isEnabled = controller.isActionButtonEnabled;
+          final buttonText = controller.actionButtonText;
+          final isFilled = controller.isSelectedDateFilled;
+          
+          return ElevatedButton.icon(
+            onPressed: isEnabled ? () => _onActionButtonPressed(context, controller) : null,
+            icon: Icon(
+              isFilled ? Icons.visibility : Icons.add_circle_outline,
+              size: 20,
+            ),
+            label: Text(
+              isFilled ? 'Посмотреть данные' : 'Записать данные',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              backgroundColor: isEnabled 
+                  ? (isFilled ? theme.colorScheme.secondary : theme.colorScheme.primary)
+                  : theme.colorScheme.onSurface.withOpacity(0.3),
+              foregroundColor: isEnabled 
+                  ? (isFilled ? theme.colorScheme.onSecondary : theme.colorScheme.onPrimary)
+                  : theme.colorScheme.onSurface.withOpacity(0.6),
+              disabledBackgroundColor: theme.colorScheme.onSurface.withOpacity(0.1),
+              disabledForegroundColor: theme.colorScheme.onSurface.withOpacity(0.4),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  /// Обработка нажатия на кнопку действия
+  void _onActionButtonPressed(BuildContext context, HomeController controller) {
+    try {
+      // Определяем режим на основе состояния дня
+      final isFilled = controller.isSelectedDateFilled;
+      final mode = isFilled ? 'list' : 'edit'; // Если заполнено - показываем список, иначе сразу редактирование
+      
+      // Устанавливаем режим в DataEntryController
+      final dataEntryController = Get.find<DataEntryController>();
+      dataEntryController.setInitialViewMode(mode);
+      
+      // Переключаемся на вкладку "Ввод" через NavigationController
+      final navigationController = Get.find<NavigationController>();
+      navigationController.goToDataEntry();
+    } catch (e) {
+      print('NavigationController не найден: $e');
+    }
+  }
+
+  /// Форматирует дату для отображения
+  String _formatDate(DateTime date) {
+    const months = [
+      'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+      'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
+    ];
+    
+    return '${date.day} ${months[date.month - 1]} ${date.year}';
+  }
+}
+</file>
+
+<file path="lib/presentation/screens/parameter_edit_screen.dart">
+// lib/presentation/screens/parameter_edit_screen.dart
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../../models/parameter.dart';
+import '../../domain/controllers/parameter_controller.dart';
+import '../theme/app_theme.dart';
+
+class ParameterEditScreen extends StatefulWidget {
+  final Parameter parameter; // Принимаем параметр для редактирования
+
+  const ParameterEditScreen({Key? key, required this.parameter}) : super(key: key);
+
+  @override
+  State<ParameterEditScreen> createState() => _ParameterEditScreenState();
+}
+
+class _ParameterEditScreenState extends State<ParameterEditScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _parameterController = Get.find<ParameterController>();
+
+  // Используем TextEditingController для предзаполнения полей
+  late TextEditingController _nameController;
+  late TextEditingController _unitController;
+  String? _dataType; // Тип данных как и раньше
+
+  @override
+  void initState() {
+    super.initState();
+    // Инициализируем контроллеры и тип данных значениями из widget.parameter
+    _nameController = TextEditingController(text: widget.parameter.name);
+    _unitController = TextEditingController(text: widget.parameter.unit ?? '');
+    _dataType = _mapDataTypeToDisplay(widget.parameter.dataType);
+  }
+  
+  // Маппинг типов данных из базы в отображаемые значения
+  String _mapDataTypeToDisplay(String dbType) {
+    switch (dbType) {
+      case 'Number': return 'Число';
+      case 'Text': return 'Текст';
+      case 'Rating': return 'Оценка';
+      case 'YesNo': return 'Да/Нет';
+      case 'Time': return 'Время';
+      case 'Date': return 'Дата';
+      default: return 'Число';
+    }
+  }
+  
+  // Маппинг отображаемых значений в типы базы данных
+  String _mapDisplayToDataType(String displayType) {
+    switch (displayType) {
+      case 'Число': return 'Number';
+      case 'Текст': return 'Text';
+      case 'Оценка': return 'Rating';
+      case 'Да/Нет': return 'YesNo';
+      case 'Время': return 'Time';
+      case 'Дата': return 'Date';
+      default: return 'Number';
+    }
+  }
+
+  @override
+  void dispose() {
+    // Не забываем очищать контроллеры
+    _nameController.dispose();
+    _unitController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
+    return Scaffold(
+      backgroundColor: theme.colorScheme.background,
+      appBar: AppBar(
+        title: const Text('Редактировать параметр'),
+      ),
+      body: SingleChildScrollView(
+        padding: AppTheme.pagePadding,
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Card(
+                child: Padding(
+                  padding: AppTheme.cardPadding,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.edit,
+                            color: theme.colorScheme.primary,
+                            size: 24,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Редактирование параметра',
+                            style: theme.textTheme.titleLarge,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      TextFormField(
+                        controller: _nameController,
+                        decoration: InputDecoration(
+                          labelText: 'Название параметра',
+                          hintText: 'Например: Вес, Настроение, Сон',
+                          prefixIcon: const Icon(Icons.label_outline),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Пожалуйста, введите название параметра';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      DropdownButtonFormField<String>(
+                        decoration: InputDecoration(
+                          labelText: 'Тип данных',
+                          hintText: 'Выберите тип',
+                          prefixIcon: const Icon(Icons.category_outlined),
+                        ),
+                        value: _dataType,
+                        items: <String>['Число', 'Текст', 'Оценка', 'Да/Нет']
+                            .map<DropdownMenuItem<String>>((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Row(
+                              children: [
+                                Icon(
+                                  _getTypeIcon(value),
+                                  size: 20,
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                                const SizedBox(width: 12),
+                                Text(value),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Пожалуйста, выберите тип данных';
+                          }
+                          return null;
+                        },
+                        onChanged: (String? newValue) {
+                          setState(() {
+                            _dataType = newValue;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      TextFormField(
+                        controller: _unitController,
+                        decoration: InputDecoration(
+                          labelText: 'Единица измерения (опционально)',
+                          hintText: 'кг, см, баллы, часы и т.д.',
+                          prefixIcon: const Icon(Icons.straighten),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _updateParameter,
+                  icon: const Icon(Icons.save),
+                  label: const Text('Сохранить изменения'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _updateParameter() async {
+    final theme = Theme.of(context);
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save(); // Хотя save здесь не обязателен с контроллерами
+
+      final updatedName = _nameController.text;
+      final updatedUnit = _unitController.text;
+
+      // Создаем обновленный объект Parameter, используя ID из исходного параметра
+      final updatedParameter = widget.parameter.copyWith(
+        name: updatedName,
+        dataType: _mapDisplayToDataType(_dataType!), // Преобразуем обратно в тип базы данных
+        unit: updatedUnit.isEmpty ? null : updatedUnit,
+        // scaleOptions пока не редактируем, но можно добавить логику и для них
+      );
+
+      try {
+        await _parameterController.updateParameter(updatedParameter);
+
+        Get.back(); // Возвращаемся на предыдущий экран (список)
+
+        Get.snackbar( // Показываем снэкбар уже на экране списка
+          'Успех',
+          'Параметр "${updatedParameter.name}" успешно обновлен!',
+          snackPosition: SnackPosition.BOTTOM
+        );
+
+      } catch (e) {
+         ScaffoldMessenger.of(context).showSnackBar(
+           SnackBar(
+             content: Text('Ошибка при обновлении: $e'),
+             backgroundColor: theme.colorScheme.error,
+             behavior: SnackBarBehavior.floating,
+           ),
+         );
+      }
+    }
+  }
+  
+  IconData _getTypeIcon(String dataType) {
+    switch (dataType.toLowerCase()) {
+      case 'число':
+        return Icons.numbers;
+      case 'текст':
+        return Icons.text_fields;
+      case 'оценка':
+        return Icons.star_rate;
+      case 'да/нет':
+        return Icons.check_box;
+      case 'время':
+        return Icons.access_time;
+      case 'дата':
+        return Icons.date_range;
+      default:
+        return Icons.tune;
+    }
+  }
+}
+</file>
+
+<file path="pubspec.yaml">
+name: biologgs
+description: "A new Flutter project."
+# The following line prevents the package from being accidentally published to
+# pub.dev using `flutter pub publish`. This is preferred for private packages.
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+# The following defines the version and build number for your application.
+# A version number is three numbers separated by dots, like 1.2.43
+# followed by an optional build number separated by a +.
+# Both the version and the builder number may be overridden in flutter
+# build by specifying --build-name and --build-number, respectively.
+# In Android, build-name is used as versionName while build-number used as versionCode.
+# Read more about Android versioning at https://developer.android.com/studio/publish/versioning
+# In iOS, build-name is used as CFBundleShortVersionString while build-number is used as CFBundleVersion.
+# Read more about iOS versioning at
+# https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
+# In Windows, build-name is used as the major, minor, and patch parts
+# of the product and file versions while build-number is used as the build suffix.
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.7.2
+
+# Dependencies specify other packages that your package needs in order to work.
+# To automatically upgrade your package dependencies to the latest versions
+# consider running `flutter pub upgrade --major-versions`. Alternatively,
+# dependencies can be manually updated by changing the version numbers below to
+# the latest version available on pub.dev. To see which dependencies have newer
+# versions available, run `flutter pub outdated`.
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # The following adds the Cupertino Icons font to your application.
+  # Use with the CupertinoIcons class for iOS style icons.
+  cupertino_icons: ^1.0.8
+  sqflite: ^2.0.0  # Используй последнюю версию, или укажи конкретную версию, если нужно
+  path: ^1.8.0     # Пакет 'path' тоже нужен для работы с путями к файлам
+  get: ^4.6.5
+  intl: ^0.18.0
+  path_provider: ^2.0.14
+  share_plus: ^7.2.1
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # The "flutter_lints" package below contains a set of recommended lints to
+  # encourage good coding practices. The lint set provided by the package is
+  # activated in the `analysis_options.yaml` file located at the root of your
+  # package. See that file for information about deactivating specific lint
+  # rules and activating additional ones.
+  flutter_lints: ^5.0.0
+  sqflite_common_ffi: ^2.0.0  # For testing database operations
+
+# For information on the generic Dart part of this file, see the
+# following page: https://dart.dev/tools/pub/pubspec
+
+# The following section is specific to Flutter packages.
+flutter:
+
+  # The following line ensures that the Material Icons font is
+  # included with your application, so that you can use the icons in
+  # the material Icons class.
+  uses-material-design: true
+
+  # To add assets to your application, add an assets section, like this:
+  # assets:
+  #   - images/a_dot_burr.jpeg
+  #   - images/a_dot_ham.jpeg
+
+  # An image asset can refer to one or more resolution-specific "variants", see
+  # https://flutter.dev/to/resolution-aware-images
+
+  # For details regarding adding assets from package dependencies, see
+  # https://flutter.dev/to/asset-from-package
+
+  # To add custom fonts to your application, add a fonts section here,
+  # in this "flutter" section. Each entry in this list should have a
+  # "family" key with the font family name, and a "fonts" key with a
+  # list giving the asset and other descriptors for the font. For
+  # example:
+  # fonts:
+  #   - family: Schyler
+  #     fonts:
+  #       - asset: fonts/Schyler-Regular.ttf
+  #       - asset: fonts/Schyler-Italic.ttf
+  #         style: italic
+  #   - family: Trajan Pro
+  #     fonts:
+  #       - asset: fonts/TrajanPro.ttf
+  #       - asset: fonts/TrajanPro_Bold.ttf
+  #         weight: 700
+  #
+  # For details regarding fonts from package dependencies,
+  # see https://flutter.dev/to/font-from-package
+</file>
+
 <file path="lib/presentation/screens/data_entry_screen.dart">
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -6989,10 +7530,15 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
         }
       });
       
-      // Автофокус для Number/Text полей
+      // Автофокус для Number/Text полей или убираем фокус для остальных
       if (currentParameter.dataType == 'Number' || currentParameter.dataType == 'Text') {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _valueFocusNode.requestFocus();
+        });
+      } else if (currentParameter.dataType == 'Rating' || currentParameter.dataType == 'YesNo') {
+        // Убираем клавиатуру для типов, которые не нуждаются в текстовом вводе
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          FocusScope.of(context).unfocus();
         });
       }
     }
@@ -7430,7 +7976,7 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
 
   /// Строит страницу для конкретного параметра
   Widget _buildParameterPage(Parameter parameter, BuildContext context, ThemeData theme) {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
@@ -7670,315 +8216,6 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
 }
 </file>
 
-<file path="lib/presentation/screens/home_screen.dart">
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import '../../domain/controllers/home_controller.dart';
-import '../../domain/controllers/data_entry_controller.dart';
-import '../widgets/calendar_widget.dart';
-import 'main_navigation_screen.dart';
-
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final HomeController controller = Get.find();
-    final theme = Theme.of(context);
-    
-    return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
-      appBar: AppBar(
-        title: const Text('BioLogger'),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: theme.colorScheme.primary,
-        foregroundColor: Colors.white,
-      ),
-      body: Column(
-        children: [
-          // Календарный виджет (без скроллинга)
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  // Календарный виджет
-                  Expanded(
-                    child: Obx(() => CalendarWidget(
-                      selectedDate: controller.selectedDate.value,
-                      filledDates: controller.filledDates.value,
-                      onDateSelected: controller.selectDate,
-                      onMonthChanged: controller.changeMonth,
-                      displayMonth: controller.currentMonth.value,
-                    )),
-                  ),
-                  
-                  const SizedBox(height: 16),
-                  
-                  // Компактная статистика дней подряд
-                  _buildCompactStats(controller, theme),
-                ],
-              ),
-            ),
-          ),
-          
-          // Динамическая кнопка внизу
-          _buildActionButton(context, controller, theme),
-        ],
-      ),
-    );
-  }
-
-  /// Создает компактную статистику дней подряд
-  Widget _buildCompactStats(HomeController controller, ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      decoration: BoxDecoration(
-        border: Border(
-          top: BorderSide(color: Colors.grey.shade300, width: 1),
-        ),
-      ),
-      child: Column(
-        children: [
-          // Заголовок
-          Text(
-            'Серии заполнений:',
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: theme.colorScheme.onSurface.withOpacity(0.8),
-            ),
-          ),
-          const SizedBox(height: 12),
-          
-          // Счетчики
-          Obx(() => Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              // Дни подряд
-              Column(
-                children: [
-                  Text(
-                    '${controller.consecutiveDays.value}',
-                    style: theme.textTheme.headlineLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF87A96B), // Sage green
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Дней подряд',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                ],
-              ),
-              
-              // Дни в месяце
-              Column(
-                children: [
-                  Text(
-                    '${controller.monthlyFilledDays.value}',
-                    style: theme.textTheme.headlineLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF87A96B), // Sage green
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Дней в этом месяце',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          )),
-        ],
-      ),
-    );
-  }
-
-  /// Создает информацию о выбранной дате
-  Widget _buildSelectedDateInfo(HomeController controller, ThemeData theme) {
-    return Obx(() {
-      final selectedDate = controller.selectedDate.value;
-      final isToday = controller.isSelectedDateToday;
-      final isFilled = controller.isSelectedDateFilled;
-      final isInFuture = controller.isSelectedDateInFuture;
-      
-      String statusText;
-      Color statusColor;
-      IconData statusIcon;
-      
-      if (isInFuture) {
-        statusText = 'Будущий день';
-        statusColor = theme.colorScheme.onSurface.withOpacity(0.6);
-        statusIcon = Icons.schedule;
-      } else if (isFilled) {
-        statusText = 'День заполнен';
-        statusColor = Colors.green;
-        statusIcon = Icons.check_circle;
-      } else {
-        statusText = 'Данные не введены';
-        statusColor = theme.colorScheme.error;
-        statusIcon = Icons.radio_button_unchecked;
-      }
-      
-      return Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              Text(
-                'Выбранный день',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
-                ),
-              ),
-              const SizedBox(height: 8),
-              
-              // Дата
-              Text(
-                _formatDate(selectedDate),
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onSurface,
-                ),
-              ),
-              
-              if (isToday) ...[
-                const SizedBox(height: 4),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Text(
-                    'Сегодня',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-              
-              const SizedBox(height: 12),
-              
-              // Статус дня
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    statusIcon,
-                    color: statusColor,
-                    size: 18,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    statusText,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: statusColor,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      );
-    });
-  }
-
-  /// Создает динамическую кнопку действия
-  Widget _buildActionButton(BuildContext context, HomeController controller, ThemeData theme) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        border: Border(
-          top: BorderSide(
-            color: theme.colorScheme.outline.withOpacity(0.2),
-            width: 1,
-          ),
-        ),
-      ),
-      child: SafeArea(
-        child: Obx(() {
-          final isEnabled = controller.isActionButtonEnabled;
-          final buttonText = controller.actionButtonText;
-          final isFilled = controller.isSelectedDateFilled;
-          
-          return ElevatedButton.icon(
-            onPressed: isEnabled ? () => _onActionButtonPressed(context, controller) : null,
-            icon: Icon(
-              isFilled ? Icons.visibility : Icons.add_circle_outline,
-              size: 20,
-            ),
-            label: Text(
-              isFilled ? 'Посмотреть данные' : 'Записать данные',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              backgroundColor: isEnabled 
-                  ? (isFilled ? theme.colorScheme.secondary : theme.colorScheme.primary)
-                  : theme.colorScheme.onSurface.withOpacity(0.3),
-              foregroundColor: isEnabled 
-                  ? (isFilled ? theme.colorScheme.onSecondary : theme.colorScheme.onPrimary)
-                  : theme.colorScheme.onSurface.withOpacity(0.6),
-              disabledBackgroundColor: theme.colorScheme.onSurface.withOpacity(0.1),
-              disabledForegroundColor: theme.colorScheme.onSurface.withOpacity(0.4),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          );
-        }),
-      ),
-    );
-  }
-
-  /// Обработка нажатия на кнопку действия
-  void _onActionButtonPressed(BuildContext context, HomeController controller) {
-    try {
-      // Определяем режим на основе состояния дня
-      final isFilled = controller.isSelectedDateFilled;
-      final mode = isFilled ? 'list' : 'edit'; // Если заполнено - показываем список, иначе сразу редактирование
-      
-      // Устанавливаем режим в DataEntryController
-      final dataEntryController = Get.find<DataEntryController>();
-      dataEntryController.setInitialViewMode(mode);
-      
-      // Переключаемся на вкладку "Ввод" через NavigationController
-      final navigationController = Get.find<NavigationController>();
-      navigationController.goToDataEntry();
-    } catch (e) {
-      print('NavigationController не найден: $e');
-    }
-  }
-
-  /// Форматирует дату для отображения
-  String _formatDate(DateTime date) {
-    const months = [
-      'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
-      'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
-    ];
-    
-    return '${date.day} ${months[date.month - 1]} ${date.year}';
-  }
-}
-</file>
-
 <file path="lib/main.dart">
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -7994,6 +8231,7 @@ import 'domain/controllers/daily_record_controller.dart';
 import 'domain/controllers/parameter_controller.dart';
 import 'domain/controllers/data_entry_controller.dart';
 import 'domain/controllers/home_controller.dart';
+import 'domain/controllers/metrics_tab_controller.dart';
 import 'domain/services/preset_parameters_service.dart';
 
 void main() async {
@@ -8044,6 +8282,7 @@ class AppBindings extends Bindings {
       () => HomeController(Get.find<CalculateStreakUseCase>()),
       fenix: true,
     );
+    Get.lazyPut(() => MetricsTabController(), fenix: true);
     
     // Services
     Get.lazyPut<PresetParametersService>(
@@ -8129,104 +8368,6 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 }
-</file>
-
-<file path="pubspec.yaml">
-name: biologgs
-description: "A new Flutter project."
-# The following line prevents the package from being accidentally published to
-# pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
-
-# The following defines the version and build number for your application.
-# A version number is three numbers separated by dots, like 1.2.43
-# followed by an optional build number separated by a +.
-# Both the version and the builder number may be overridden in flutter
-# build by specifying --build-name and --build-number, respectively.
-# In Android, build-name is used as versionName while build-number used as versionCode.
-# Read more about Android versioning at https://developer.android.com/studio/publish/versioning
-# In iOS, build-name is used as CFBundleShortVersionString while build-number is used as CFBundleVersion.
-# Read more about iOS versioning at
-# https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-# In Windows, build-name is used as the major, minor, and patch parts
-# of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0+1
-
-environment:
-  sdk: ^3.7.2
-
-# Dependencies specify other packages that your package needs in order to work.
-# To automatically upgrade your package dependencies to the latest versions
-# consider running `flutter pub upgrade --major-versions`. Alternatively,
-# dependencies can be manually updated by changing the version numbers below to
-# the latest version available on pub.dev. To see which dependencies have newer
-# versions available, run `flutter pub outdated`.
-dependencies:
-  flutter:
-    sdk: flutter
-
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.8
-  sqflite: ^2.0.0  # Используй последнюю версию, или укажи конкретную версию, если нужно
-  path: ^1.8.0     # Пакет 'path' тоже нужен для работы с путями к файлам
-  get: ^4.6.5
-  intl: ^0.18.0
-  path_provider: ^2.0.14
-  share_plus: ^7.2.1
-dev_dependencies:
-  flutter_test:
-    sdk: flutter
-
-  # The "flutter_lints" package below contains a set of recommended lints to
-  # encourage good coding practices. The lint set provided by the package is
-  # activated in the `analysis_options.yaml` file located at the root of your
-  # package. See that file for information about deactivating specific lint
-  # rules and activating additional ones.
-  flutter_lints: ^5.0.0
-  sqflite_common_ffi: ^2.0.0  # For testing database operations
-
-# For information on the generic Dart part of this file, see the
-# following page: https://dart.dev/tools/pub/pubspec
-
-# The following section is specific to Flutter packages.
-flutter:
-
-  # The following line ensures that the Material Icons font is
-  # included with your application, so that you can use the icons in
-  # the material Icons class.
-  uses-material-design: true
-
-  # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
-
-  # An image asset can refer to one or more resolution-specific "variants", see
-  # https://flutter.dev/to/resolution-aware-images
-
-  # For details regarding adding assets from package dependencies, see
-  # https://flutter.dev/to/asset-from-package
-
-  # To add custom fonts to your application, add a fonts section here,
-  # in this "flutter" section. Each entry in this list should have a
-  # "family" key with the font family name, and a "fonts" key with a
-  # list giving the asset and other descriptors for the font. For
-  # example:
-  # fonts:
-  #   - family: Schyler
-  #     fonts:
-  #       - asset: fonts/Schyler-Regular.ttf
-  #       - asset: fonts/Schyler-Italic.ttf
-  #         style: italic
-  #   - family: Trajan Pro
-  #     fonts:
-  #       - asset: fonts/TrajanPro.ttf
-  #       - asset: fonts/TrajanPro_Bold.ttf
-  #         weight: 700
-  #
-  # For details regarding fonts from package dependencies,
-  # see https://flutter.dev/to/font-from-package
 </file>
 
 <file path="pubspec.lock">

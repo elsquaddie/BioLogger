@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../models/parameter.dart';
@@ -159,17 +160,24 @@ class DataEntryController extends GetxController {
         print('NavigationController не найден для навигации: $e');
       }
       
+      // Убираем клавиатуру перед показом уведомления и переходом
+      FocusManager.instance.primaryFocus?.unfocus();
+      
       Get.snackbar(
         'Успех',
         'Данные сохранены за ${DateFormat('dd.MM.yyyy').format(selectedDate.value)}',
         snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.only(bottom: 24, left: 12, right: 12),
       );
     } catch (e) {
       // Error saving daily record: $e
+      FocusManager.instance.primaryFocus?.unfocus();
+      
       Get.snackbar(
         'Ошибка',
         'Не удалось сохранить данные',
         snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.only(bottom: 24, left: 12, right: 12),
       );
     }
   }
