@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BioLogger — Единый макет (иконки унифицированы)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+  <style>
+    :root{ --brand:#88A874; --brand-700:#6f8d5f; --tint:#e8f1e3; }
+    html,body{height:100%}
+    body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,"Apple Color Emoji","Segoe UI Emoji";background:#f7faf9}
+    .btn-primary{background:var(--brand);color:#fff}
+    .btn-primary:hover{background:var(--brand-700)}
+    .btn-outline{border:1px solid #cbd5e1;background:#fff}
+    .card{background:#fff;border-radius:1.25rem;box-shadow:0 1px 2px rgba(16,24,40,.06);border:1px solid rgba(16,24,40,.06)}
+    .screen{display:none}
+    .screen.active{display:block}
+    .tab-active{color:var(--brand)}
+    /* Calendar */
+    .day{width:2.75rem;height:2.75rem;border-radius:9999px;display:grid;place-content:center}
+    .day-muted{color:#cbd5e1}
+    .day-completed{background:rgba(136,168,116,.9);color:#fff}
+    .day-selected{outline:2px solid rgba(136,168,116,.45)}
+    .day-today{outline:2px solid rgba(0,0,0,.08)}
+    .avatar{width:36px;height:36px;border-radius:9999px;background:#fde68a;display:block}
+    .metric-icon{width:56px;height:56px;border-radius:9999px;background:#a6bf94;display:grid;place-content:center;color:#fff}
+    .progress{height:6px;background:#eef2f6;border-radius:9999px;overflow:hidden}
+    .progress > span{display:block;height:100%;background:var(--brand)}
+    .segmented [aria-pressed="true"]{background:#e9f3e6;color:var(--brand);font-weight:600}
+    .chip{border:1px solid #e5e7eb}
+    .chip[aria-pressed="true"]{border-color:var(--brand);color:var(--brand);background:#f1f7ee}
+    .icon-btn{width:3.25rem;height:3.25rem}
+    .icon-swatch{width:1.75rem;height:1.75rem}
+    .sheet{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none}
+    .sheet.open{display:flex}
+    .sheet-panel{margin-top:auto;background:#fff;border-radius:1rem 1rem 0 0;max-height:88vh;display:flex;flex-direction:column}
+    .drag-handle{width:2.5rem;height:.3rem;background:#d1d5db;border-radius:9999px;margin:.5rem auto}
+    .scrollbar-thin::-webkit-scrollbar{height:6px;width:6px}
+    .scrollbar-thin::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:9999px}
+    input[type="range"]{accent-color:var(--brand)}
+    /* Тинтованные иконки (единый стиль) */
+    .tint-box{background:var(--tint); color:var(--brand);}
+  </style>
+</head>
+<body class="max-w-sm mx-auto h-full">
+
+  <!-- ================== DASHBOARD ================== -->
+  <div id="screen-dashboard" class="screen active">
+    <header class="bg-[var(--brand)] text-white sticky top-0 z-20">
+      <div class="h-16 px-4 flex items-center justify-between">
+        <div class="text-2xl font-semibold tracking-tight">BioLogger</div>
+        <div class="flex items-center gap-4">
+          <span class="material-icons text-[26px] opacity-95">notifications_none</span>
+          <span class="avatar ring-2 ring-white/50"></span>
+        </div>
+      </div>
+    </header>
+
+    <main class="pb-28">
+      <!-- Calendar -->
+      <section class="px-4 pt-4">
+        <div class="card p-4">
+          <div class="flex items-center justify-between">
+            <button id="calPrev" class="p-2 rounded hover:bg-gray-100" aria-label="Предыдущий месяц"><span class="material-icons text-[24px]">chevron_left</span></button>
+            <h2 id="monthTitle" class="text-2xl font-bold text-gray-800 select-none">August 2025</h2>
+            <button id="calNext" class="p-2 rounded hover:bg-gray-100" aria-label="Следующий месяц"><span class="material-icons text-[24px]">chevron_right</span></button>
+          </div>
+          <div class="grid grid-cols-7 text-center text-sm text-gray-400 mt-3">
+            <div>Пн</div><div>Вт</div><div>Ср</div><div>Чт</div><div>Пт</div><div>Сб</div><div>Вс</div>
+          </div>
+          <div id="calendarGrid" class="grid grid-cols-7 gap-y-3 justify-items-center mt-2"></div>
+        </div>
+      </section>
+
+      <!-- Stats -->
+      <section class="px-4 mt-6">
+        <h3 class="text-2xl font-extrabold text-gray-800">Статистика заполнений</h3>
+        <div class="grid grid-cols-2 gap-4 mt-4">
+          <div class="card p-4 flex items-center gap-3">
+            <div class="metric-icon"><span class="material-icons">local_fire_department</span></div>
+            <div class="leading-tight">
+              <div id="streakDays" class="text-3xl font-bold text-gray-900">1</div>
+              <div class="text-gray-500 text-lg">День подряд</div>
+            </div>
+          </div>
+          <div class="card p-4 flex items-center gap-3">
+            <div class="metric-icon"><span class="material-icons">event</span></div>
+            <div class="leading-tight">
+              <div id="monthDays" class="text-3xl font-bold text-gray-900">4</div>
+              <div class="text-gray-500 text-lg">Дней в этом месяце</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CTA -->
+      <section class="px-4 mt-8">
+        <button id="toRecord" class="w-full px-6 py-5 rounded-2xl btn-primary text-xl font-semibold flex items-center justify-center gap-3">
+          <span class="material-icons">add</span> Добавить запись
+        </button>
+      </section>
+    </main>
+
+    <!-- Tabbar -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t">
+      <div class="max-w-sm mx-auto grid grid-cols-4 py-2 text-sm text-gray-600">
+        <button class="flex flex-col items-center py-1 tab-active" data-tab="home">
+          <span class="material-icons">grid_view</span>
+          <span>Главная</span>
+        </button>
+        <button class="flex flex-col items-center py-1" data-tab="record">
+          <span class="material-icons">check_circle</span>
+          <span>Запись</span>
+        </button>
+        <button class="flex flex-col items-center py-1" data-tab="data">
+          <span class="material-icons">insights</span>
+          <span>Данные</span>
+        </button>
+        <button class="flex flex-col items-center py-1" data-tab="settings">
+          <span class="material-icons">settings</span>
+          <span>Настройки</span>
+        </button>
+      </div>
+    </nav>
+  </div>
+
+  <!-- ================== DATA ENTRY LIST (Запись → список параметров) ================== -->
+  <div id="screen-entry-list" class="screen">
+    <header class="bg-[var(--brand)] text-white sticky top-0 z-20">
+      <div class="h-14 flex items-center px-3">
+        <button class="-ml-1 p-2 rounded hover:bg-white/10" aria-label="Назад" data-back="dashboard"><span class="material-icons">arrow_back_ios</span></button>
+        <h1 class="text-base font-semibold mx-auto pr-8"><span id="entryDateTitle">Данные за 16.08.2025</span></h1>
+      </div>
+    </header>
+
+    <main class="pb-24">
+      <ul id="entryList" class="divide-y divide-gray-100">
+        <!-- items render via JS -->
+      </ul>
+    </main>
+
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t">
+      <div class="max-w-sm mx-auto grid grid-cols-4 py-2 text-sm text-gray-600">
+        <button class="flex flex-col items-center py-1" data-tab="home">
+          <span class="material-icons">grid_view</span><span>Главная</span>
+        </button>
+        <button class="flex flex-col items-center py-1 tab-active" data-tab="record">
+          <span class="material-icons">check_circle</span><span>Запись</span>
+        </button>
+        <button class="flex flex-col items-center py-1" data-tab="data">
+          <span class="material-icons">insights</span><span>Данные</span>
+        </button>
+        <button class="flex flex-col items-center py-1" data-tab="settings">
+          <span class="material-icons">settings</span><span>Настройки</span>
+        </button>
+      </div>
+    </nav>
+  </div>
+
+  <!-- ================== DATA ENTRY — NUMBER ================== -->
+  <div id="screen-entry-number" class="screen">
+    <header class="bg-[var(--brand)] text-white sticky top-0 z-20">
+      <div class="h-14 flex items-center px-3 justify-between">
+        <button class="-ml-1 p-2 rounded hover:bg-white/10" aria-label="Назад" data-back="entry-list"><span class="material-icons">arrow_back_ios</span></button>
+        <div class="font-semibold truncate max-w-[60%]" id="numTitle">Данные за 16.08.2025</div>
+        <div class="text-sm pr-1" id="numProgress">4 / 15</div>
+      </div>
+      <div class="px-4 pb-2">
+        <div class="progress"><span id="numBar" style="width:20%"></span></div>
+      </div>
+    </header>
+
+    <main class="pb-28">
+      <section class="px-4">
+        <div class="card p-4 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <span class="material-icons text-[var(--brand)]">event</span>
+            <div class="font-medium">Дата:</div>
+          </div>
+          <div class="flex items-center gap-2 text-[var(--brand)]">
+            <span class="material-icons text-[20px]">edit</span>
+            <span id="numDate">16.08.2025</span>
+          </div>
+        </div>
+
+        <div class="card p-6 mt-3 text-center">
+          <div class="w-16 h-16 rounded-2xl mx-auto grid place-content-center tint-box">
+            <span id="numIcon" class="material-icons">fitness_center</span>
+          </div>
+          <h2 id="numParamName" class="text-2xl font-extrabold text-gray-800 mt-3">Тренировка</h2>
+          <div id="numUnitLabel" class="text-gray-500">Единицы: минуты</div>
+        </div>
+
+        <div class="mt-4">
+          <label class="text-sm text-gray-700">Значение</label>
+          <div class="mt-1 flex items-center gap-2">
+            <span class="material-icons text-[var(--brand)]">fitness_center</span>
+            <input id="numInput" type="number" class="flex-1 px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[var(--brand)] bg-gray-50" placeholder="Введите значение" />
+          </div>
+        </div>
+
+        <div class="mt-3">
+          <label class="text-sm text-gray-700">Комментарий (необязательно)</label>
+          <textarea id="numComment" rows="2" class="mt-1 w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[var(--brand)]" placeholder="Добавьте заметку"></textarea>
+        </div>
+      </section>
+    </main>
+
+    <div class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t">
+      <div class="max-w-sm mx-auto px-4 py-3 flex gap-3">
+        <button class="flex-1 px-4 py-3 rounded-xl btn-outline" data-back="entry-list"><span class="mr-2 material-icons align-middle">west</span>Назад</button>
+        <button id="numNext" class="flex-[2] px-4 py-3 rounded-xl btn-primary"><span class="mr-2 material-icons align-middle">east</span>Далее</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================== DATA ENTRY — RATING (ШКАЛА) ================== -->
+  <div id="screen-entry-rating" class="screen">
+    <header class="bg-[var(--brand)] text-white sticky top-0 z-20">
+      <div class="h-14 flex items-center px-3 justify-between">
+        <button class="-ml-1 p-2 rounded hover:bg-white/10" aria-label="Назад" data-back="entry-list"><span class="material-icons">arrow_back_ios</span></button>
+        <div class="font-semibold truncate max-w-[60%]" id="ratTitle">Данные за 16.08.2025</div>
+        <div class="text-sm pr-1" id="ratProgress">6 / 15</div>
+      </div>
+      <div class="px-4 pb-2">
+        <div class="progress"><span id="ratBar" style="width:40%"></span></div>
+      </div>
+    </header>
+
+    <main class="pb-28">
+      <section class="px-4">
+        <div class="card p-4 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <span class="material-icons text-[var(--brand)]">event</span>
+            <div class="font-medium">Дата:</div>
+          </div>
+          <div class="flex items-center gap-2 text-[var(--brand)]">
+            <span class="material-icons text-[20px]">edit</span>
+            <span id="ratDate">16.08.2025</span>
+          </div>
+        </div>
+
+        <div class="card p-6 mt-3 text-center">
+          <div class="w-16 h-16 rounded-2xl mx-auto grid place-content-center tint-box">
+            <span id="ratIcon" class="material-icons">groups</span>
+          </div>
+          <h2 id="ratParamName" class="text-2xl font-extrabold text-gray-800 mt-3">Оценка социальности</h2>
+          <div id="ratUnitLabel" class="text-gray-500">Единицы: 1–10</div>
+        </div>
+
+        <div class="mt-4">
+          <div class="flex items-center justify-between text-sm text-gray-600">
+            <span>1</span><span>10</span>
+          </div>
+          <div class="mt-2 p-3 rounded-xl border">
+            <input id="ratInput" type="range" min="1" max="10" value="6" class="w-full" />
+            <div class="mt-1 text-gray-700">Оценка: <span id="ratVal">6</span></div>
+          </div>
+        </div>
+
+        <div class="mt-3">
+          <label class="text-sm text-gray-700">Комментарий (необязательно)</label>
+          <textarea id="ratComment" rows="2" class="mt-1 w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[var(--brand)]" placeholder="Добавьте заметку"></textarea>
+        </div>
+      </section>
+    </main>
+
+    <div class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t">
+      <div class="max-w-sm mx-auto px-4 py-3 flex gap-3">
+        <button class="flex-1 px-4 py-3 rounded-xl btn-outline" data-back="entry-list"><span class="mr-2 material-icons align-middle">west</span>Назад</button>
+        <button id="ratNext" class="flex-[2] px-4 py-3 rounded-xl btn-primary"><span class="mr-2 material-icons align-middle">east</span>Далее</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================== DATA ENTRY — TEXT ================== -->
+  <div id="screen-entry-text" class="screen">
+    <header class="bg-[var(--brand)] text-white sticky top-0 z-20">
+      <div class="h-14 flex items-center px-3 justify-between">
+        <button class="-ml-1 p-2 rounded hover:bg-white/10" aria-label="Назад" data-back="entry-list"><span class="material-icons">arrow_back_ios</span></button>
+        <div class="font-semibold truncate max-w-[60%]" id="txtTitle">Данные за 16.08.2025</div>
+        <div class="text-sm pr-1" id="txtProgress">14 / 15</div>
+      </div>
+      <div class="px-4 pb-2">
+        <div class="progress"><span id="txtBar" style="width:80%"></span></div>
+      </div>
+    </header>
+
+    <main class="pb-28">
+      <section class="px-4">
+        <div class="card p-4 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <span class="material-icons text-[var(--brand)]">event</span>
+            <div class="font-medium">Дата:</div>
+          </div>
+          <div class="flex items-center gap-2 text-[var(--brand)]">
+            <span class="material-icons text-[20px]">edit</span>
+            <span id="txtDate">16.08.2025</span>
+          </div>
+        </div>
+
+        <div class="card p-6 mt-3 text-center">
+          <div class="w-16 h-16 rounded-2xl mx-auto grid place-content-center tint-box">
+            <span id="txtIcon" class="material-icons">edit_note</span>
+          </div>
+          <h2 id="txtParamName" class="text-2xl font-extrabold text-gray-800 mt-3">Почему такая оценка</h2>
+        </div>
+
+        <div class="mt-4">
+          <label class="text-sm text-gray-700">Ответ</label>
+          <div class="mt-1 flex items-center gap-2">
+            <span class="material-icons text-[var(--brand)]">edit_note</span>
+            <input id="txtInput" type="text" class="flex-1 px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[var(--brand)] bg-gray-50" placeholder="Введите текст" />
+          </div>
+        </div>
+
+        <div class="mt-3">
+          <label class="text-sm text-gray-700">Комментарий (необязательно)</label>
+          <textarea id="txtComment" rows="2" class="mt-1 w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[var(--brand)]" placeholder="Добавьте заметку"></textarea>
+        </div>
+      </section>
+    </main>
+
+    <div class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t">
+      <div class="max-w-sm mx-auto px-4 py-3 flex gap-3">
+        <button class="flex-1 px-4 py-3 rounded-xl btn-outline" data-back="entry-list"><span class="mr-2 material-icons align-middle">west</span>Назад</button>
+        <button id="txtNext" class="flex-[2] px-4 py-3 rounded-xl btn-primary"><span class="mr-2 material-icons align-middle">east</span>Далее</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================== DATA (Вкладка) ================== -->
+  <div id="screen-metrics" class="screen">
+    <header class="bg-[var(--brand)] text-white sticky top-0 z-20">
+      <div class="h-16 px-4 flex items-center justify-center">
+        <h1 class="text-2xl font-semibold">Данные</h1>
+      </div>
+    </header>
+
+    <main class="pb-24">
+      <section class="px-4 pt-4">
+        <h2 class="text-2xl font-extrabold text-gray-800">Управление параметрами</h2>
+        <p class="text-gray-600 mt-1">Создавайте и редактируйте параметры для отслеживания</p>
+
+        <div class="mt-4 card p-4 flex items-center gap-3">
+          <div class="w-12 h-12 rounded-xl grid place-content-center tint-box">
+            <span class="material-icons">insights</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="font-medium">Параметры для отслеживания</div>
+            <div class="text-sm text-gray-500">Всего создано: <span id="totalParams">15</span></div>
+          </div>
+          <span class="material-icons text-gray-400">chevron_right</span>
+        </div>
+
+        <button id="btnManageParams" class="mt-3 w-full px-4 py-4 rounded-2xl btn-primary text-base font-semibold flex items-center justify-center gap-2">
+          <span class="material-icons">tune</span> Управлять параметрами
+        </button>
+      </section>
+
+      <section class="px-4 mt-8">
+        <h2 class="text-2xl font-extrabold text-gray-800">Статистика и анализ</h2>
+        <p class="text-gray-600 mt-1">Графики и анализ ваших данных появятся позже</p>
+
+        <div class="mt-4 space-y-3">
+          <div class="bg-white rounded-2xl ring-1 ring-black/5 p-4 flex items-center gap-3 opacity-70">
+            <div class="w-12 h-12 rounded-xl grid place-content-center tint-box"><span class="material-icons">trending_up</span></div>
+            <div class="flex-1 min-w-0">
+              <div class="font-medium">Тренды и динамика</div>
+              <div class="text-sm text-gray-500">Анализ изменений параметров со временем</div>
+            </div>
+            <span class="text-xs px-2 py-1 rounded-full bg-gray-100">Скоро</span>
+          </div>
+          <div class="bg-white rounded-2xl ring-1 ring-black/5 p-4 flex items-center gap-3 opacity-70">
+            <div class="w-12 h-12 rounded-xl grid place-content-center tint-box"><span class="material-icons">bar_chart</span></div>
+            <div class="flex-1 min-w-0">
+              <div class="font-medium">Сравнительная статистика</div>
+              <div class="text-sm text-gray-500">Сравнение показателей за разные периоды</div>
+            </div>
+            <span class="text-xs px-2 py-1 rounded-full bg-gray-100">Скоро</span>
+          </div>
+          <div class="bg-white rounded-2xl ring-1 ring-black/5 p-4 flex items-center gap-3 opacity-70">
+            <div class="w-12 h-12 rounded-xl grid place-content-center tint-box"><span class="material-icons">auto_graph</span></div>
+            <div class="flex-1 min-w-0">
+              <div class="font-medium">Корреляции</div>
+              <div class="text-sm text-gray-500">Взаимосвязи между параметрами</div>
+            </div>
+            <span class="text-xs px-2 py-1 rounded-full bg-gray-100">Скоро</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t">
+      <div class="max-w-sm mx-auto grid grid-cols-4 py-2 text-sm text-gray-600">
+        <button class="flex flex-col items-center py-1" data-tab="home">
+          <span class="material-icons">grid_view</span><span>Главная</span>
+        </button>
+        <button class="flex flex-col items-center py-1" data-tab="record">
+          <span class="material-icons">check_circle</span><span>Запись</span>
+        </button>
+        <button class="flex flex-col items-center py-1 tab-active" data-tab="data">
+          <span class="material-icons">insights</span><span>Данные</span>
+        </button>
+        <button class="flex flex-col items-center py-1" data-tab="settings">
+          <span class="material-icons">settings</span><span>Настройки</span>
+        </button>
+      </div>
+    </nav>
+  </div>
+
+  <!-- ================== PARAMS MANAGE ================== -->
+  <div id="screen-manage" class="screen">
+    <header class="bg-[var(--brand)] text-white sticky top-0 z-20">
+      <div class="h-14 flex items-center px-3">
+        <button class="-ml-1 p-2 rounded hover:bg-white/10" aria-label="Назад" data-back="metrics"><span class="material-icons">arrow_back_ios</span></button>
+        <h1 class="text-base font-semibold mx-auto pr-8">Управление параметрами</h1>
+      </div>
+    </header>
+
+    <main class="pb-28">
+      <ul id="manageList" class="divide-y divide-gray-100">
+        <!-- render via JS -->
+      </ul>
+    </main>
+
+    <button id="fabAdd" class="fixed bottom-20 right-4 px-5 py-4 rounded-2xl btn-primary shadow-lg flex items-center gap-2">
+      <span class="material-icons">add</span>Добавить
+    </button>
+
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t">
+      <div class="max-w-sm mx-auto grid grid-cols-4 py-2 text-sm text-gray-600">
+        <button class="flex flex-col items-center py-1" data-tab="home">
+          <span class="material-icons">grid_view</span><span>Главная</span>
+        </button>
+        <button class="flex flex-col items-center py-1" data-tab="record">
+          <span class="material-icons">check_circle</span><span>Запись</span>
+        </button>
+        <button class="flex flex-col items-center py-1 tab-active" data-tab="data">
+          <span class="material-icons">insights</span><span>Данные</span>
+        </button>
+        <button class="flex flex-col items-center py-1" data-tab="settings">
+          <span class="material-icons">settings</span><span>Настройки</span>
+        </button>
+      </div>
+    </nav>
+  </div>
+
+  <!-- ================== SETTINGS ================== -->
+  <div id="screen-settings" class="screen">
+    <header class="bg-[var(--brand)] text-white sticky top-0 z-20">
+      <div class="h-16 px-4 flex items-center justify-center">
+        <h1 class="text-2xl font-semibold">Настройки</h1>
+      </div>
+    </header>
+
+    <main class="pb-24">
+      <section class="px-4 pt-4">
+        <h2 class="text-2xl font-extrabold text-gray-800">Экспорт и резервное копирование</h2>
+        <p class="text-gray-600 mt-1">Сохраните данные или поделитесь ими</p>
+        <button class="mt-3 w-full px-4 py-4 rounded-2xl btn-primary text-base font-semibold flex items-center justify-center gap-2">
+          <span class="material-icons">ios_share</span> Экспортировать данные в CSV
+        </button>
+      </section>
+
+      <section class="px-4 mt-8">
+        <h2 class="text-2xl font-extrabold text-gray-800">Настройки приложения</h2>
+        <div class="mt-4 space-y-3">
+          <div class="card p-4 flex items-center gap-3 opacity-70">
+            <div class="w-12 h-12 rounded-xl grid place-content-center tint-box"><span class="material-icons">notifications</span></div>
+            <div class="flex-1">
+              <div class="font-medium">Уведомления</div>
+              <div class="text-sm text-gray-500">Напоминания о вводе данных</div>
+            </div>
+            <span class="text-xs px-2 py-1 rounded-full bg-gray-100">Скоро</span>
+          </div>
+          <div class="card p-4 flex items-center gap-3 opacity-70">
+            <div class="w-12 h-12 rounded-xl grid place-content-center tint-box"><span class="material-icons">palette</span></div>
+            <div class="flex-1">
+              <div class="font-medium">Тема оформления</div>
+              <div class="text-sm text-gray-500">Светлая/тёмная/авто</div>
+            </div>
+            <span class="text-xs px-2 py-1 rounded-full bg-gray-100">Скоро</span>
+          </div>
+          <div class="card p-4 flex items-center gap-3 opacity-70">
+            <div class="w-12 h-12 rounded-xl grid place-content-center tint-box"><span class="material-icons">backup</span></div>
+            <div class="flex-1">
+              <div class="font-medium">Синхронизация</div>
+              <div class="text-sm text-gray-500">Резервное копирование в облако</div>
+            </div>
+            <span class="text-xs px-2 py-1 rounded-full bg-gray-100">Скоро</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="px-4 mt-8">
+        <h2 class="text-2xl font-extrabold text-gray-800">О приложении</h2>
+        <div class="card p-4 mt-3 flex items-center gap-3">
+          <div class="w-12 h-12 rounded-xl grid place-content-center tint-box"><span class="material-icons">health_and_safety</span></div>
+          <div>
+            <div class="font-semibold">BioLogger</div>
+            <div class="text-sm text-gray-500">Трекер здоровья и самочувствия</div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t">
+      <div class="max-w-sm mx-auto grid grid-cols-4 py-2 text-sm text-gray-600">
+        <button class="flex flex-col items-center py-1" data-tab="home">
+          <span class="material-icons">grid_view</span><span>Главная</span>
+        </button>
+        <button class="flex flex-col items-center py-1" data-tab="record">
+          <span class="material-icons">check_circle</span><span>Запись</span>
+        </button>
+        <button class="flex flex-col items-center py-1" data-tab="data">
+          <span class="material-icons">insights</span><span>Данные</span>
+        </button>
+        <button class="flex flex-col items-center py-1 tab-active" data-tab="settings">
+          <span class="material-icons">settings</span><span>Настройки</span>
+        </button>
+      </div>
+    </nav>
+  </div>
+
+  <!-- ================== CREATE PARAM — ШАГ 1 ================== -->
+  <div id="screen-step1" class="screen">
+    <header class="bg-[var(--brand)] text-white sticky top-0 z-20 shadow">
+      <div class="h-14 flex items-center px-3">
+        <button class="-ml-1 p-2 rounded hover:bg-white/10" aria-label="Назад" data-back="metrics"><span class="material-icons">arrow_back_ios</span></button>
+        <h1 class="text-base font-semibold mx-auto pr-8">Новый параметр</h1>
+      </div>
+      <div class="px-4 pb-3">
+        <ol class="flex items-center gap-2 text-xs text-white/90">
+          <li class="flex items-center gap-2"><span class="w-5 h-5 grid place-content-center rounded-full bg-white/90 text-[var(--brand)] font-semibold">1</span><span>Базовые</span></li>
+          <span class="opacity-60">—</span>
+          <li class="flex items-center gap-2"><span class="w-5 h-5 grid place-content-center rounded-full bg-white/20 font-semibold">2</span><span class="opacity-90">Тип</span></li>
+        </ol>
+      </div>
+    </header>
+
+    <main class="pb-28">
+      <section class="px-4 pt-4">
+        <div class="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-4 space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="font-semibold text-gray-800">Базовые настройки</h2>
+            <span class="text-xs text-gray-500">Шаг 1 из 2</span>
+          </div>
+
+          <div>
+            <label for="name" class="text-sm text-gray-700">Название</label>
+            <div class="mt-1 flex items-center gap-3">
+              <button id="openIconPickerFromAv" class="w-11 h-11 shrink-0 rounded-full grid place-content-center text-white" title="Выбрать иконку" style="background:#88A874"><span id="avatarIcon" class="material-icons">directions_walk</span></button>
+              <input id="name" class="flex-1 px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[var(--brand)]" placeholder="Например, Вода" />
+            </div>
+            <p class="mt-1 text-xs text-gray-500">Коротко и понятно — так параметр легче найти в списке.</p>
+          </div>
+
+          <div>
+            <label class="text-sm text-gray-700">Цвет</label>
+            <div class="mt-1 flex gap-2 flex-wrap">
+              <button class="icon-swatch rounded-full ring-1 ring-black/5" style="background:#88A874" data-color="#88A874" aria-label="Зелёный"></button>
+              <button class="icon-swatch rounded-full ring-1 ring-black/5" style="background:#3b82f6" data-color="#3b82f6" aria-label="Синий"></button>
+              <button class="icon-swatch rounded-full ring-1 ring-black/5" style="background:#f59e0b" data-color="#f59e0b" aria-label="Оранжевый"></button>
+              <button class="icon-swatch rounded-full ring-1 ring-black/5" style="background:#ef4444" data-color="#ef4444" aria-label="Красный"></button>
+              <button class="icon-swatch rounded-full ring-1 ring-black/5" style="background:#8b5cf6" data-color="#8b5cf6" aria-label="Фиолетовый"></button>
+              <button class="icon-swatch rounded-full ring-1 ring-black/5" style="background:#10b981" data-color="#10b981" aria-label="Бирюзовый"></button>
+              <button class="icon-swatch rounded-full ring-1 ring-black/5" style="background:#f97316" data-color="#f97316" aria-label="Апельсиновый"></button>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm text-gray-700">Иконка</span>
+              <button id="openIconPicker" class="text-sm text-[var(--brand)] font-medium">Все иконки</button>
+            </div>
+            <!-- быстрый пресет: зелёные -->
+            <div class="grid grid-cols-7 gap-2">
+              <button class="icon-btn rounded-full tint-box grid place-content-center" data-icon="sentiment_neutral" title="Настроение"><span class="material-icons">sentiment_neutral</span></button>
+              <button class="icon-btn rounded-full tint-box grid place-content-center" data-icon="favorite" title="Привлекательность"><span class="material-icons">favorite</span></button>
+              <button class="icon-btn rounded-full tint-box grid place-content-center" data-icon="grade" title="Самореализация"><span class="material-icons">grade</span></button>
+              <button class="icon-btn rounded-full tint-box grid place-content-center" data-icon="restaurant" title="Питание"><span class="material-icons">restaurant</span></button>
+              <button class="icon-btn rounded-full tint-box grid place-content-center" data-icon="attach_money" title="Финансы"><span class="material-icons">attach_money</span></button>
+              <button class="icon-btn rounded-full tint-box grid place-content-center" data-icon="public" title="Социальная полезность"><span class="material-icons">public</span></button>
+              <button id="plusIcon" class="icon-btn rounded-full border border-dashed border-gray-300 grid place-content-center text-gray-500 bg-white" title="Открыть полную библиотеку"><span class="material-icons">add</span></button>
+            </div>
+          </div>
+
+          <div class="pt-1">
+            <div class="text-xs text-gray-500 mb-2">Превью карточки</div>
+            <div id="previewCard1" class="flex items-center gap-3 p-3 rounded-xl border bg-gray-50">
+              <div class="w-9 h-9 rounded-full grid place-content-center text-white" id="p1Bubble" style="background:#88A874"><span id="p1Icon" class="material-icons text-[20px]">directions_walk</span></div>
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-medium truncate" id="previewTitle1">Новый параметр</div>
+                <div class="text-xs text-gray-500 truncate" id="previewSub1">Последнее значение: 5</div>
+              </div>
+              <span class="material-icons text-gray-400">chevron_right</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t">
+      <div class="max-w-sm mx-auto px-4 py-3 flex gap-3">
+        <button class="flex-1 px-4 py-3 rounded-xl border" data-back="metrics">Отмена</button>
+        <button id="nextToStep2" class="flex-[2] px-4 py-3 rounded-xl btn-primary disabled:opacity-40" disabled>Далее</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================== CREATE PARAM — ШАГ 2 ================== -->
+  <div id="screen-step2" class="screen">
+    <header class="bg-[var(--brand)] text-white sticky top-0 z-20 shadow">
+      <div class="h-14 flex items-center px-3">
+        <button class="-ml-1 p-2 rounded hover:bg-white/10" aria-label="Назад" data-back="step1"><span class="material-icons">arrow_back_ios</span></button>
+        <h1 class="text-base font-semibold mx-auto pr-8">Новый параметр</h1>
+      </div>
+      <div class="px-4 pb-3">
+        <ol class="flex items-center gap-2 text-xs text-white/90">
+          <li class="flex items-center gap-2"><span class="w-5 h-5 grid place-content-center rounded-full bg-white/20 font-semibold">1</span><span class="opacity-90">Базовые</span></li>
+          <span class="opacity-60">—</span>
+          <li class="flex items-center gap-2"><span class="w-5 h-5 grid place-content-center rounded-full bg-white/90 text-[var(--brand)] font-semibold">2</span><span>Тип</span></li>
+        </ol>
+      </div>
+    </header>
+
+    <main class="pb-28">
+      <section class="px-4 pt-4">
+        <div class="bg-white rounded-2xl shadow-sm ring-1 ring-black/5 p-4 space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="font-semibold text-gray-800">Тип и формат данных</h2>
+            <span class="text-xs text-gray-500">Шаг 2 из 2</span>
+          </div>
+          <div class="segmented grid grid-cols-3 gap-2" role="tablist">
+            <button id="tNum" role="tab" aria-pressed="true" class="px-3 py-2 rounded-xl border">Числовой</button>
+            <button id="tScale" role="tab" aria-pressed="false" class="px-3 py-2 rounded-xl border">Шкала</button>
+            <button id="tText" role="tab" aria-pressed="false" class="px-3 py-2 rounded-xl border">Текст</button>
+          </div>
+
+          <!-- NUMERIC -->
+          <div id="cNum" class="space-y-3">
+            <p class="text-sm text-gray-600">Подходит для измеримых величин: расстояние, вес, давление.</p>
+            <div>
+              <label class="text-sm text-gray-700">Единица</label>
+              <input id="unit" class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[var(--brand)]" placeholder="км / кг / мл" />
+              <div class="text-xs text-gray-500 mt-1">Превью обновляется сразу.</div>
+            </div>
+          </div>
+
+          <!-- SCALE -->
+          <div id="cScale" class="space-y-3 hidden">
+            <p class="text-sm text-gray-600">Оценка по шкале — удобно для настроения, боли, стресса.</p>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-sm text-gray-700">Левый край</label>
+                <input id="sLeft" class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300" value="Плохо" />
+              </div>
+              <div>
+                <label class="text-sm text-gray-700">Правый край</label>
+                <input id="sRight" class="mt-1 w-full px-3 py-2 rounded-lg border border-gray-300" value="Отлично" />
+              </div>
+              <div>
+                <label class="text-sm text-gray-700">Деления</label>
+                <input id="sSteps" type="range" min="3" max="10" value="5" class="w-full" />
+                <div class="text-xs text-gray-500 mt-1">Текущее: <span id="stepsVal">5</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TEXT -->
+          <div id="cText" class="space-y-3 hidden">
+            <p class="text-sm text-gray-600">Значение сохраняется как текст.</p>
+          </div>
+
+          <!-- PREVIEW -->
+          <div class="pt-1">
+            <div class="text-xs text-gray-500 mb-2">Превью карточки</div>
+            <div id="previewCard2" class="flex items-center gap-3 p-3 rounded-xl border bg-gray-50">
+              <div class="w-9 h-9 rounded-full grid place-content-center text-white" id="p2Bubble" style="background:#88A874"><span id="p2Icon" class="material-icons text-[20px]">directions_walk</span></div>
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-medium truncate" id="previewTitle2">Новый параметр</div>
+                <div id="previewValue" class="text-xs text-gray-500 truncate">Последнее значение: 5</div>
+              </div>
+              <span class="material-icons text-gray-400">chevron_right</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t">
+      <div class="max-w-sm mx-auto px-4 py-3 flex gap-3">
+        <button class="flex-1 px-4 py-3 rounded-xl border" data-back="step1">Назад</button>
+        <button id="createBtn" class="flex-[2] px-4 py-3 rounded-xl btn-primary disabled:opacity-40" disabled>Создать параметр</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================== ICON PICKER (полная библиотека, зелёный стиль) ================== -->
+  <div id="iconSheet" class="sheet">
+    <div class="sheet-panel w-full max-w-sm mx-auto">
+      <div class="drag-handle"></div>
+      <div class="px-4 pt-1 pb-3 border-b">
+        <div class="flex items-center justify-between">
+          <h3 class="font-semibold">Выбор иконки</h3>
+          <button id="closeSheet" class="p-2 text-gray-500"><span class="material-icons">close</span></button>
+        </div>
+        <div class="mt-2 flex gap-1 overflow-x-auto scrollbar-thin" id="catTabs">
+          <button class="chip px-2.5 py-1.5 rounded-xl text-sm" data-cat="all" aria-pressed="true">Все</button>
+          <button class="chip px-2.5 py-1.5 rounded-xl text-sm" data-cat="activity">Активность</button>
+          <button class="chip px-2.5 py-1.5 rounded-xl text-sm" data-cat="mood">Настроение</button>
+          <button class="chip px-2.5 py-1.5 rounded-xl text-sm" data-cat="sleep">Сон</button>
+          <button class="chip px-2.5 py-1.5 rounded-xl text-sm" data-cat="food">Еда/напитки</button>
+          <button class="chip px-2.5 py-1.5 rounded-xl text-sm" data-cat="health">Здоровье</button>
+          <button class="chip px-2.5 py-1.5 rounded-xl text-sm" data-cat="work">Работа/учёба</button>
+          <button class="chip px-2.5 py-1.5 rounded-xl text-sm" data-cat="finance">Финансы</button>
+          <button class="chip px-2.5 py-1.5 rounded-xl text-sm" data-cat="leisure">Досуг</button>
+          <button class="chip px-2.5 py-1.5 rounded-xl text-sm" data-cat="habits">Привычки</button>
+        </div>
+      </div>
+      <div class="p-4 overflow-y-auto">
+        <div id="iconGrid" class="grid grid-cols-5 gap-3">
+          <!-- Активность -->
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="бег" data-cat="activity" data-icon="directions_run"><span class="material-icons">directions_run</span></button>
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="ходьба" data-cat="activity" data-icon="directions_walk"><span class="material-icons">directions_walk</span></button>
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="велосипед" data-cat="activity" data-icon="directions_bike"><span class="material-icons">directions_bike</span></button>
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="плавание" data-cat="activity" data-icon="pool"><span class="material-icons">pool</span></button>
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="силовая" data-cat="activity" data-icon="fitness_center"><span class="material-icons">fitness_center</span></button>
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="йога" data-cat="activity" data-icon="self_improvement"><span class="material-icons">self_improvement</span></button>
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="каратэ" data-cat="activity" data-icon="sports_kabaddi"><span class="material-icons">sports_kabaddi</span></button>
+          <!-- Сон/режим -->
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="сон" data-cat="sleep" data-icon="bedtime"><span class="material-icons">bedtime</span></button>
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="будильник" data-cat="sleep" data-icon="alarm"><span class="material-icons">alarm</span></button>
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="дыхание" data-cat="sleep" data-icon="air"><span class="material-icons">air</span></button>
+          <!-- Еда/напитки -->
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="вода" data-cat="food" data-icon="water_drop"><span class="material-icons">water_drop</span></button>
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="кофе" data-cat="food" data-icon="local_cafe"><span class="material-icons">local_cafe</span></button>
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="чай" data-cat="food" data-icon="emoji_food_beverage"><span class="material-icons">emoji_food_beverage</span></button>
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="еда" data-cat="food" data-icon="restaurant"><span class="material-icons">restaurant</span></button>
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="сладкое" data-cat="food" data-icon="icecream"><span class="material-icons">icecream</span></button>
+          <!-- Настроение -->
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="очень хорошо" data-cat="mood" data-icon="sentiment_very_satisfied"><span class="material-icons">sentiment_very_satisfied</span></button>
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="хорошо" data-cat="mood" data-icon="sentiment_satisfied"><span class="material-icons">sentiment_satisfied</span></button>
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="нейтрально" data-cat="mood" data-icon="sentiment_neutral"><span class="material-icons">sentiment_neutral</span></button>
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="плохо" data-cat="mood" data-icon="sentiment_dissatisfied"><span class="material-icons">sentiment_dissatisfied</span></button>
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="очень плохо" data-cat="mood" data-icon="sentiment_very_dissatisfied"><span class="material-icons">sentiment_very_dissatisfied</span></button>
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="стресс" data-cat="mood" data-icon="psychology"><span class="material-icons">psychology</span></button>
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="релакс" data-cat="mood" data-icon="spa"><span class="material-icons">spa</span></button>
+          <!-- Здоровье -->
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="пульс" data-cat="health" data-icon="monitor_heart"><span class="material-icons">monitor_heart</span></button>
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="давление" data-cat="health" data-icon="bloodtype"><span class="material-icons">bloodtype</span></button>
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="вес" data-cat="health" data-icon="monitor_weight"><span class="material-icons">monitor_weight</span></button>
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="таблетки" data-cat="health" data-icon="medication"><span class="material-icons">medication</span></button>
+          <!-- Работа/учёба -->
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="работа" data-cat="work" data-icon="work"><span class="material-icons">work</span></button>
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="учёба" data-cat="work" data-icon="menu_book"><span class="material-icons">menu_book</span></button>
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="почта" data-cat="work" data-icon="email"><span class="material-icons">email</span></button>
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="код" data-cat="work" data-icon="code"><span class="material-icons">code</span></button>
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="заметка" data-cat="work" data-icon="edit_note"><span class="material-icons">edit_note</span></button>
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="чек-лист" data-cat="work" data-icon="fact_check"><span class="material-icons">fact_check</span></button>
+          <!-- Финансы -->
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="деньги" data-cat="finance" data-icon="attach_money"><span class="material-icons">attach_money</span></button>
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="кошелёк" data-cat="finance" data-icon="account_balance_wallet"><span class="material-icons">account_balance_wallet</span></button>
+          <!-- Привычки/соц. -->
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="алкоголь" data-cat="habits" data-icon="local_bar"><span class="material-icons">local_bar</span></button>
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="курение" data-cat="habits" data-icon="smoke_free"><span class="material-icons">smoke_free</span></button>
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="лайк" data-cat="habits" data-icon="thumb_up"><span class="material-icons">thumb_up</span></button>
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="мир/соц.польза" data-cat="habits" data-icon="public"><span class="material-icons">public</span></button>
+          <!-- Досуг -->
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="фильм" data-cat="leisure" data-icon="movie"><span class="material-icons">movie</span></button>
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="игры" data-cat="leisure" data-icon="videogame_asset"><span class="material-icons">videogame_asset</span></button>
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="музыка" data-cat="leisure" data-icon="music_note"><span class="material-icons">music_note</span></button>
+          <button class="icon-btn rounded-full tint-box grid place-content-center" data-label="книга" data-cat="leisure" data-icon="menu_book"><span class="material-icons">menu_book</span></button>
+        </div>
+      </div>
+      <div class="p-4 border-t">
+        <button id="applyIcon" class="w-full px-4 py-3 rounded-xl btn-primary disabled:opacity-40" disabled>Применить</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ---- Simple nav ---- */
+    function go(id){
+      document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+      document.getElementById('screen-'+id).classList.add('active');
+      document.querySelectorAll('[data-tab]').forEach(b=>b.classList.remove('tab-active'));
+      if(id==='dashboard') document.querySelector('[data-tab="home"]').classList.add('tab-active');
+      if(id==='entry-list' || id.startsWith('entry-')) document.querySelectorAll('[data-tab]').forEach(b=>{ if(b.dataset.tab==='record') b.classList.add('tab-active'); });
+      if(id==='metrics' || id==='manage') document.querySelector('[data-tab="data"]').classList.add('tab-active');
+      if(id==='settings') document.querySelector('[data-tab="settings"]').classList.add('tab-active');
+      window.scrollTo({top:0,behavior:'instant'});
+    }
+    document.querySelectorAll('[data-tab="home"]').forEach(b=>b.addEventListener('click',()=>go('dashboard')));
+    document.querySelectorAll('[data-tab="record"]').forEach(b=>b.addEventListener('click',()=>go('entry-list')));
+    document.querySelectorAll('[data-tab="data"]').forEach(b=>b.addEventListener('click',()=>go('metrics')));
+    document.querySelectorAll('[data-tab="settings"]').forEach(b=>b.addEventListener('click',()=>go('settings')));
+    document.querySelectorAll('[data-back]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.back)));
+    document.getElementById('toRecord').addEventListener('click',()=>go('entry-list'));
+    document.getElementById('btnManageParams').addEventListener('click',()=>go('manage'));
+    document.getElementById('fabAdd').addEventListener('click',()=>go('step1'));
+
+    /* ---- Dashboard calendar (demo) ---- */
+    const grid = document.getElementById('calendarGrid');
+    const monthTitle = document.getElementById('monthTitle');
+    let view = new Date(2025,7,1); // Aug 2025
+    const completed = new Set(['2025-08-08','2025-08-09','2025-08-10','2025-08-13']);
+    function fmt(d){const m=('0'+(d.getMonth()+1)).slice(-2);const day=('0'+d.getDate()).slice(-2);return d.getFullYear()+'-'+m+'-'+day;}
+    function buildCalendar(){
+      grid.innerHTML='';
+      const y=view.getFullYear(), m=view.getMonth();
+      const first = new Date(y,m,1), last=new Date(y,m+1,0);
+      const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
+      monthTitle.textContent=monthNames[m]+' '+y;
+      let startIdx=first.getDay(); startIdx=(startIdx===0?6:startIdx-1);
+      const totalCells=Math.ceil((startIdx+last.getDate())/7)*7;
+      const todayStr=fmt(new Date());
+      for(let i=0;i<totalCells;i++){
+        const day=i-startIdx+1; const d=new Date(y,m,day); const inMonth=day>=1 && day<=last.getDate();
+        const b=document.createElement('button'); b.className='day text-[15px]';
+        if(!inMonth){ b.classList.add('day-muted'); b.textContent=d.getDate(); }
+        else { const key=fmt(d); b.textContent=day; if(completed.has(key)) b.classList.add('day-completed'); if(key===todayStr) b.classList.add('day-today');
+          b.addEventListener('click',()=>{grid.querySelectorAll('.day-selected').forEach(x=>x.classList.remove('day-selected')); b.classList.add('day-selected');});
+        }
+        grid.appendChild(b);
+      }
+      document.getElementById('streakDays').textContent='1';
+      document.getElementById('monthDays').textContent='4';
+    }
+    document.getElementById('calPrev').addEventListener('click',()=>{view=new Date(view.getFullYear(),view.getMonth()-1,1);buildCalendar();});
+    document.getElementById('calNext').addEventListener('click',()=>{view=new Date(view.getFullYear(),view.getMonth()+1,1);buildCalendar();});
+    buildCalendar();
+
+    /* ---- Data list + entry flow ---- */
+    const params = [
+      { id:1, name:'Оценка настроения', type:'rating', icon:'sentiment_neutral', subtitle:'Не заполнено' },
+      { id:2, name:'Оценка своей привлекательности', type:'rating', icon:'favorite', subtitle:'Не заполнено' },
+      { id:3, name:'Оценка самореализации', type:'rating', icon:'grade', subtitle:'Не заполнено' },
+      { id:4, name:'Оценка качества питания', type:'text', icon:'restaurant', subtitle:'Не заполнено' },
+      { id:5, name:'Оценка текущих финансов', type:'rating', icon:'attach_money', subtitle:'Не заполнено' },
+      { id:6, name:'Оценка социальной полезности', type:'rating', icon:'public', subtitle:'Не заполнено' },
+      { id:7, name:'Оценка прошедшего дня', type:'rating', icon:'thumb_up', subtitle:'Не заполнено' },
+      { id:8, name:'Почему такая оценка', type:'text', icon:'edit_note', subtitle:'Не заполнено' },
+      { id:9, name:'Воспоминания обo дне', type:'text', icon:'menu_book', subtitle:'Не заполнено' },
+      // Пара примеров числовых:
+      { id:10, name:'Тренировка', type:'number', unit:'минуты', icon:'fitness_center', subtitle:'Не заполнено' },
+      { id:11, name:'Количество шагов', type:'number', unit:'шагов', icon:'directions_walk', subtitle:'Не заполнено' },
+    ];
+    const entryDateText = '16.08.2025';
+    document.getElementById('entryDateTitle').textContent='Данные за '+entryDateText;
+
+    function renderEntryList(){
+      const ul = document.getElementById('entryList'); ul.innerHTML='';
+      params.forEach((p,idx)=>{
+        const li=document.createElement('li');
+        li.innerHTML = `
+          <button class="w-full px-4 py-3 flex items-center gap-3 bg-white">
+            <div class="w-12 h-12 rounded-2xl grid place-content-center tint-box"><span class="material-icons">${p.icon}</span></div>
+            <div class="flex-1 text-left">
+              <div class="font-semibold text-gray-900">${p.name}</div>
+              <div class="text-sm text-gray-400">${p.subtitle}</div>
+            </div>
+            <span class="material-icons text-gray-400">chevron_right</span>
+          </button>`;
+        li.querySelector('button').addEventListener('click',()=>openEntry(idx));
+        ul.appendChild(li);
+      });
+    }
+    renderEntryList();
+
+    let currentIndex = 0;
+    function openEntry(index){
+      currentIndex=index;
+      const p=params[index];
+      if(p.type==='number'){
+        document.getElementById('numTitle').textContent='Данные за '+entryDateText;
+        document.getElementById('numDate').textContent=entryDateText;
+        document.getElementById('numParamName').textContent=p.name;
+        document.getElementById('numIcon').textContent=p.icon;
+        document.getElementById('numUnitLabel').textContent='Единицы: '+(p.unit||'');
+        setProgress('num', index);
+        go('entry-number');
+      }else if(p.type==='rating'){
+        document.getElementById('ratTitle').textContent='Данные за '+entryDateText;
+        document.getElementById('ratDate').textContent=entryDateText;
+        document.getElementById('ratParamName').textContent=p.name;
+        document.getElementById('ratIcon').textContent=p.icon;
+        document.getElementById('ratUnitLabel').textContent='Единицы: 1–10';
+        setProgress('rat', index);
+        go('entry-rating');
+      }else{
+        document.getElementById('txtTitle').textContent='Данные за '+entryDateText;
+        document.getElementById('txtDate').textContent=entryDateText;
+        document.getElementById('txtParamName').textContent=p.name;
+        document.getElementById('txtIcon').textContent=p.icon;
+        setProgress('txt', index);
+        go('entry-text');
+      }
+    }
+    function setProgress(prefix, idx){
+      const total=params.length;
+      const pct=Math.round((idx)/Math.max(1,total-1)*100);
+      document.getElementById(prefix+'Progress').textContent=(idx+1)+' / '+total;
+      document.getElementById(prefix+'Bar').style.width=pct+'%';
+    }
+    document.getElementById('numNext').addEventListener('click',()=>openEntry(Math.min(currentIndex+1,params.length-1)));
+    document.getElementById('ratNext').addEventListener('click',()=>openEntry(Math.min(currentIndex+1,params.length-1)));
+    document.getElementById('txtNext').addEventListener('click',()=>openEntry(Math.min(currentIndex+1,params.length-1)));
+
+    /* ---- Manage list ---- */
+    function renderManage(){
+      const ul=document.getElementById('manageList'); ul.innerHTML='';
+      params.forEach(p=>{
+        const li=document.createElement('li');
+        li.innerHTML = `
+          <div class="px-4 py-3 bg-white flex items-center gap-3">
+            <span class="material-icons text-gray-400">drag_indicator</span>
+            <div class="w-12 h-12 rounded-2xl grid place-content-center tint-box"><span class="material-icons">${p.icon}</span></div>
+            <div class="flex-1">
+              <div class="font-semibold">${p.name}</div>
+              <div class="text-sm text-gray-400">${p.type==='number'?'Number'+(p.unit?` • ${p.unit}`:''):(p.type==='rating'?'Rating • 1–10':'Text')}</div>
+            </div>
+            <label class="inline-flex items-center cursor-pointer">
+              <input type="checkbox" class="sr-only peer" checked />
+              <span class="w-10 h-6 bg-gray-200 rounded-full peer-checked:bg-[var(--brand)] relative after:content-[''] after:absolute after:w-4 after:h-4 after:bg-white after:rounded-full after:left-1 after:top-1 after:transition-all peer-checked:after:translate-x-4"></span>
+            </label>
+            <button class="p-2 text-gray-500"><span class="material-icons">more_vert</span></button>
+          </div>`;
+        ul.appendChild(li);
+      });
+    }
+    renderManage();
+
+    /* ---- Creation flow ---- */
+    const state = { color:'#88A874', icon:'directions_walk', name:'', type:'num' };
+    const nameEl = document.getElementById('name');
+    const nextBtn = document.getElementById('nextToStep2');
+    const p1Bubble = document.getElementById('p1Bubble');
+    const p1Icon = document.getElementById('p1Icon');
+    const p2Bubble = document.getElementById('p2Bubble');
+    const p2Icon = document.getElementById('p2Icon');
+    const previewTitle1 = document.getElementById('previewTitle1');
+    const previewTitle2 = document.getElementById('previewTitle2');
+    const previewValue = document.getElementById('previewValue');
+    const unitEl = document.getElementById('unit');
+    const stepsEl = document.getElementById('sSteps');
+    const createBtn = document.getElementById('createBtn');
+
+    function updatePreview(){
+      previewTitle1.textContent = state.name || 'Новый параметр';
+      previewTitle2.textContent = state.name || 'Новый параметр';
+      if(state.type==='num'){
+        const u=(unitEl.value||'').trim();
+        previewValue.textContent=`Последнее значение: 5${u?' '+u:''}`;
+        document.getElementById('previewSub1').textContent=`Последнее значение: 5${u?' '+u:''}`;
+      }else if(state.type==='scale'){
+        const s=stepsEl.value; previewValue.textContent=`Последняя оценка: 4/${s}`; document.getElementById('previewSub1').textContent=`Последняя оценка: 4/${s}`;
+      }else{
+        previewValue.textContent='Есть новая заметка'; document.getElementById('previewSub1').textContent='Есть новая заметка';
+      }
+      p1Bubble.style.background=state.color; p2Bubble.style.background=state.color;
+      p1Icon.textContent=state.icon; p2Icon.textContent=state.icon;
+      nextBtn.disabled = (state.name.trim().length===0);
+      createBtn.disabled = (state.name.trim().length===0);
+    }
+    nameEl.addEventListener('input',()=>{state.name=nameEl.value;updatePreview();});
+    document.querySelectorAll('.icon-swatch').forEach(b=>b.addEventListener('click',()=>{state.color=b.dataset.color;updatePreview();}));
+
+    // быстрый выбор иконки:
+    document.querySelectorAll('#screen-step1 .icon-btn[data-icon]').forEach(btn=>btn.addEventListener('click',()=>{state.icon=btn.dataset.icon;updatePreview();}));
+    document.getElementById('nextToStep2').addEventListener('click',()=>go('step2'));
+
+    document.getElementById('tNum').addEventListener('click',()=>{setType('num')});
+    document.getElementById('tScale').addEventListener('click',()=>{setType('scale')});
+    document.getElementById('tText').addEventListener('click',()=>{setType('text')});
+    function setType(type){
+      state.type=type;
+      document.getElementById('tNum').setAttribute('aria-pressed', type==='num');
+      document.getElementById('tScale').setAttribute('aria-pressed', type==='scale');
+      document.getElementById('tText').setAttribute('aria-pressed', type==='text');
+      document.getElementById('cNum').classList.toggle('hidden', type!=='num');
+      document.getElementById('cScale').classList.toggle('hidden', type!=='scale');
+      document.getElementById('cText').classList.toggle('hidden', type!=='text');
+      updatePreview();
+    }
+    unitEl.addEventListener('input',updatePreview);
+    stepsEl.addEventListener('input',()=>{document.getElementById('stepsVal').textContent=stepsEl.value;updatePreview();});
+
+    /* ---- Icon sheet ---- */
+    const sheet = document.getElementById('iconSheet');
+    document.getElementById('plusIcon').addEventListener('click',()=>sheet.classList.add('open'));
+    document.getElementById('openIconPicker').addEventListener('click',()=>sheet.classList.add('open'));
+    document.getElementById('openIconPickerFromAv').addEventListener('click',()=>sheet.classList.add('open'));
+    document.getElementById('closeSheet').addEventListener('click',()=>sheet.classList.remove('open'));
+    let selectedIconBtn=null; const applyBtn=document.getElementById('applyIcon');
+    function selectIcon(btn){ if(selectedIconBtn){selectedIconBtn.classList.remove('ring-2','ring-[var(--brand)]','bg-[var(--brand)]/10');}
+      selectedIconBtn=btn; applyBtn.disabled=false; btn.classList.add('ring-2','ring-[var(--brand)]'); }
+    document.getElementById('iconGrid').addEventListener('click',e=>{const b=e.target.closest('button[data-icon]'); if(!b) return; selectIcon(b);});
+    document.getElementById('catTabs').addEventListener('click',e=>{const b=e.target.closest('button[data-cat]'); if(!b) return;
+      document.querySelectorAll('#catTabs button').forEach(x=>x.setAttribute('aria-pressed','false')); b.setAttribute('aria-pressed','true');
+      const cat=b.dataset.cat; document.querySelectorAll('#iconGrid [data-icon]').forEach(x=>x.classList.toggle('hidden',!(cat==='all'||x.dataset.cat===cat)));});
+    applyBtn.addEventListener('click',()=>{ if(!selectedIconBtn) return; state.icon=selectedIconBtn.dataset.icon; sheet.classList.remove('open'); updatePreview();});
+
+    document.getElementById('createBtn').addEventListener('click',()=>{ // demo add
+      params.push({ id:Date.now(), name:state.name, type:state.type==='scale'?'rating':(state.type==='text'?'text':'number'), icon:state.icon, unit:unitEl.value||'', subtitle:'Не заполнено' });
+      document.getElementById('totalParams').textContent = String(params.length);
+      renderEntryList(); renderManage(); go('metrics');
+    });
+  </script>
+</body>
+</html>

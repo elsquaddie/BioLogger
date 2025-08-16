@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import '../../domain/controllers/home_controller.dart';
 import '../../domain/controllers/data_entry_controller.dart';
 import '../widgets/calendar_widget.dart';
+import '../widgets/ui_components/index.dart';
+import '../theme/app_theme.dart';
 import 'main_navigation_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -14,117 +16,147 @@ class HomeScreen extends StatelessWidget {
     final theme = Theme.of(context);
     
     return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
+      backgroundColor: AppTheme.backgroundLight,
       appBar: AppBar(
         title: const Text('BioLogger'),
         centerTitle: true,
         elevation: 0,
-        backgroundColor: theme.colorScheme.primary,
+        backgroundColor: AppTheme.brandGreen,
         foregroundColor: Colors.white,
       ),
-      body: Column(
-        children: [
-          // Календарный виджет (без скроллинга)
-          Expanded(
-            child: Padding(
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            // Календарный виджет
+            Padding(
               padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  // Календарный виджет
-                  Expanded(
-                    child: Obx(() => CalendarWidget(
-                      selectedDate: controller.selectedDate.value,
-                      filledDates: controller.filledDates.value,
-                      onDateSelected: controller.selectDate,
-                      onMonthChanged: controller.changeMonth,
-                      displayMonth: controller.currentMonth.value,
-                    )),
+              child: Obx(() => CalendarWidget(
+                selectedDate: controller.selectedDate.value,
+                filledDates: controller.filledDates.value,
+                onDateSelected: controller.selectDate,
+                onMonthChanged: controller.changeMonth,
+                displayMonth: controller.currentMonth.value,
+              )),
+            ),
+            
+            // Заголовок статистики
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Статистика заполнений',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1F2937),
                   ),
-                  
-                  const SizedBox(height: 16),
-                  
-                  // Компактная статистика дней подряд
-                  _buildCompactStats(controller, theme),
-                ],
+                ),
               ),
             ),
-          ),
-          
-          // Динамическая кнопка внизу
-          _buildActionButton(context, controller, theme),
-        ],
+            
+            // Статистика в карточках
+            _buildCompactStats(controller, theme),
+            
+            const SizedBox(height: 24),
+            
+            // Кнопка добавить запись
+            _buildActionButton(context, controller, theme),
+            
+            const SizedBox(height: 24),
+          ],
+        ),
       ),
     );
   }
 
-  /// Создает компактную статистику дней подряд
+  /// Создает компактную статистику в новом дизайне
   Widget _buildCompactStats(HomeController controller, ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      decoration: BoxDecoration(
-        border: Border(
-          top: BorderSide(color: Colors.grey.shade300, width: 1),
-        ),
-      ),
-      child: Column(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Obx(() => Row(
         children: [
-          // Заголовок
-          Text(
-            'Серии заполнений:',
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: theme.colorScheme.onSurface.withOpacity(0.8),
+          // Streak (серия дней)
+          Expanded(
+            child: AppCard(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  TintedIconBox(
+                    icon: Icons.local_fire_department,
+                    size: 56,
+                    iconSize: 28,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${controller.consecutiveDays.value}',
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1F2937),
+                          ),
+                        ),
+                        Text(
+                          'Дней подряд',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 12),
           
-          // Счетчики
-          Obx(() => Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              // Дни подряд
-              Column(
+          const SizedBox(width: 12),
+          
+          // Monthly count
+          Expanded(
+            child: AppCard(
+              padding: const EdgeInsets.all(16),
+              child: Row(
                 children: [
-                  Text(
-                    '${controller.consecutiveDays.value}',
-                    style: theme.textTheme.headlineLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF87A96B), // Sage green
-                    ),
+                  TintedIconBox(
+                    icon: Icons.event,
+                    size: 56,
+                    iconSize: 28,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Дней подряд',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: Colors.grey.shade600,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${controller.monthlyFilledDays.value}',
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1F2937),
+                          ),
+                        ),
+                        Text(
+                          'В этом месяце',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
-              
-              // Дни в месяце
-              Column(
-                children: [
-                  Text(
-                    '${controller.monthlyFilledDays.value}',
-                    style: theme.textTheme.headlineLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF87A96B), // Sage green
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Дней в этом месяце',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          )),
+            ),
+          ),
         ],
-      ),
+      )),
     );
   }
 
@@ -224,54 +256,20 @@ class HomeScreen extends StatelessWidget {
 
   /// Создает динамическую кнопку действия
   Widget _buildActionButton(BuildContext context, HomeController controller, ThemeData theme) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        border: Border(
-          top: BorderSide(
-            color: theme.colorScheme.outline.withOpacity(0.2),
-            width: 1,
-          ),
-        ),
-      ),
-      child: SafeArea(
-        child: Obx(() {
-          final isEnabled = controller.isActionButtonEnabled;
-          final buttonText = controller.actionButtonText;
-          final isFilled = controller.isSelectedDateFilled;
-          
-          return ElevatedButton.icon(
-            onPressed: isEnabled ? () => _onActionButtonPressed(context, controller) : null,
-            icon: Icon(
-              isFilled ? Icons.visibility : Icons.add_circle_outline,
-              size: 20,
-            ),
-            label: Text(
-              isFilled ? 'Посмотреть данные' : 'Записать данные',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              backgroundColor: isEnabled 
-                  ? (isFilled ? theme.colorScheme.secondary : theme.colorScheme.primary)
-                  : theme.colorScheme.onSurface.withOpacity(0.3),
-              foregroundColor: isEnabled 
-                  ? (isFilled ? theme.colorScheme.onSecondary : theme.colorScheme.onPrimary)
-                  : theme.colorScheme.onSurface.withOpacity(0.6),
-              disabledBackgroundColor: theme.colorScheme.onSurface.withOpacity(0.1),
-              disabledForegroundColor: theme.colorScheme.onSurface.withOpacity(0.4),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          );
-        }),
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Obx(() {
+        final isEnabled = controller.isActionButtonEnabled;
+        final isFilled = controller.isSelectedDateFilled;
+        
+        return PrimaryButton(
+          text: isFilled ? 'Посмотреть запись' : 'Добавить запись',
+          icon: isFilled ? Icons.visibility : Icons.add,
+          onPressed: isEnabled ? () => _onActionButtonPressed(context, controller) : null,
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+        );
+      }),
     );
   }
 
@@ -284,6 +282,10 @@ class HomeScreen extends StatelessWidget {
       
       // Устанавливаем режим в DataEntryController
       final dataEntryController = Get.find<DataEntryController>();
+      if (mode == 'edit') {
+        // При переходе в режим редактирования с кнопки "Записать данные" начинаем с первого параметра
+        dataEntryController.currentParameterIndex.value = 0;
+      }
       dataEntryController.setInitialViewMode(mode);
       
       // Переключаемся на вкладку "Ввод" через NavigationController

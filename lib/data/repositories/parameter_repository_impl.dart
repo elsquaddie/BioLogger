@@ -51,6 +51,11 @@ class ParameterRepositoryImpl implements ParameterRepository {
   }
 
   @override
+  Future<void> updateParametersSortOrder(List<Parameter> parameters) async {
+    return await _parameterDao.updateParametersSortOrder(parameters);
+  }
+
+  @override
   Future<int> deleteParameter(int id) async {
     return await _parameterDao.deleteParameter(id); // Делегируем в DAO
   }

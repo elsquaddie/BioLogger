@@ -42,7 +42,7 @@ class ParameterDao {
     Database db = await _databaseHelper.database;
     List<Map<String, dynamic>> maps = await db.query(
       DatabaseHelper.tableParameters,
-      orderBy: '${DatabaseHelper.columnParameterIsPreset} DESC, ${DatabaseHelper.columnParameterSortOrder} ASC, ${DatabaseHelper.columnParameterName} ASC',
+      orderBy: '${DatabaseHelper.columnParameterSortOrder} ASC, ${DatabaseHelper.columnParameterName} ASC',
     );
 
     print("ParameterDao: getAllParameters() - Raw data from database: $maps");
@@ -73,7 +73,7 @@ class ParameterDao {
       DatabaseHelper.tableParameters,
       where: '${DatabaseHelper.columnParameterIsEnabled} = ?',
       whereArgs: [1],
-      orderBy: '${DatabaseHelper.columnParameterIsPreset} DESC, ${DatabaseHelper.columnParameterSortOrder} ASC, ${DatabaseHelper.columnParameterName} ASC',
+      orderBy: '${DatabaseHelper.columnParameterSortOrder} ASC, ${DatabaseHelper.columnParameterName} ASC',
     );
 
     if (maps.isNotEmpty) {
@@ -157,6 +157,27 @@ class ParameterDao {
       where: '${DatabaseHelper.columnParameterId} = ?',
       whereArgs: [id],
     );
+  }
+
+  // Метод для массового обновления порядка параметров (более эффективный)
+  Future<void> updateParametersSortOrder(List<Parameter> parameters) async {
+    Database db = await _databaseHelper.database;
+    
+    print("ParameterDao: Batch updating sort order for ${parameters.length} parameters");
+    
+    Batch batch = db.batch();
+    for (int i = 0; i < parameters.length; i++) {
+      final parameter = parameters[i];
+      batch.update(
+        DatabaseHelper.tableParameters,
+        {DatabaseHelper.columnParameterSortOrder: i},
+        where: '${DatabaseHelper.columnParameterId} = ?',
+        whereArgs: [parameter.id],
+      );
+    }
+    
+    await batch.commit(noResult: true);
+    print("ParameterDao: Batch sort order update completed");
   }
 
   // Метод для удаления параметра по ID (только для пользовательских параметров)

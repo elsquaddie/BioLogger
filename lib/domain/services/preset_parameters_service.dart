@@ -70,7 +70,7 @@ class PresetParametersService {
         isPreset: true,
         isEnabled: true,
         sortOrder: 6,
-        iconName: 'people',
+        iconName: 'groups',
         createdAt: now,
       ),
       Parameter(
@@ -165,7 +165,7 @@ class PresetParametersService {
         isPreset: true,
         isEnabled: true,
         sortOrder: 15,
-        iconName: 'book',
+        iconName: 'menu_book',
         createdAt: now,
       ),
     ];

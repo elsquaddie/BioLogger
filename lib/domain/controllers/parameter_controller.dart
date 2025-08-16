@@ -33,9 +33,12 @@ class ParameterController extends GetxController {
       Get.snackbar(
         'Ошибка загрузки',
         'Не удалось загрузить параметры: $e',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+        margin: const EdgeInsets.only(top: 16, left: 16, right: 16),
+        backgroundColor: Get.theme.colorScheme.errorContainer,
+        colorText: Get.theme.colorScheme.onErrorContainer,
+        borderRadius: 12,
+        duration: const Duration(seconds: 4),
       );
       rethrow;
     }
@@ -44,19 +47,32 @@ class ParameterController extends GetxController {
 
   Future<void> createParameter(Parameter parameter) async {
     try {
-      final id = await _parameterRepository.insertParameter(parameter);
+      // Вычисляем правильный sort_order - последний в списке + 1
+      final maxSortOrder = parameters.isNotEmpty 
+          ? parameters.map((p) => p.sortOrder).reduce((a, b) => a > b ? a : b)
+          : -1;
+      final newSortOrder = maxSortOrder + 1;
+      
+      // Создаем параметр с правильным sort_order
+      final parameterWithSortOrder = parameter.copyWith(sortOrder: newSortOrder);
+      
+      final id = await _parameterRepository.insertParameter(parameterWithSortOrder);
       if (id != 0) {
-        Parameter newParameter = parameter.copyWith(id: id);
+        Parameter newParameter = parameterWithSortOrder.copyWith(id: id);
         parameters.add(newParameter);
+        print("ParameterController: Created parameter '${newParameter.name}' with sort_order: $newSortOrder");
       }
     } catch (e) {
       print("Error creating parameter: $e");
       Get.snackbar(
         'Ошибка создания',
         'Не удалось создать параметр: $e',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+        margin: const EdgeInsets.only(top: 16, left: 16, right: 16),
+        backgroundColor: Get.theme.colorScheme.errorContainer,
+        colorText: Get.theme.colorScheme.onErrorContainer,
+        borderRadius: 12,
+        duration: const Duration(seconds: 4),
       );
       rethrow;
     }
@@ -75,9 +91,12 @@ class ParameterController extends GetxController {
       Get.snackbar(
         'Ошибка обновления',
         'Не удалось обновить параметр: $e',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+        margin: const EdgeInsets.only(top: 16, left: 16, right: 16),
+        backgroundColor: Get.theme.colorScheme.errorContainer,
+        colorText: Get.theme.colorScheme.onErrorContainer,
+        borderRadius: 12,
+        duration: const Duration(seconds: 4),
       );
       rethrow;
     }
@@ -95,9 +114,12 @@ class ParameterController extends GetxController {
       Get.snackbar(
         'Ошибка удаления',
         'Не удалось удалить параметр: $e',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+        margin: const EdgeInsets.only(top: 16, left: 16, right: 16),
+        backgroundColor: Get.theme.colorScheme.errorContainer,
+        colorText: Get.theme.colorScheme.onErrorContainer,
+        borderRadius: 12,
+        duration: const Duration(seconds: 4),
       );
       rethrow;
     }
@@ -120,9 +142,12 @@ class ParameterController extends GetxController {
       Get.snackbar(
         'Ошибка переключения',
         'Не удалось изменить состояние параметра: $e',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+        margin: const EdgeInsets.only(top: 16, left: 16, right: 16),
+        backgroundColor: Get.theme.colorScheme.errorContainer,
+        colorText: Get.theme.colorScheme.onErrorContainer,
+        borderRadius: 12,
+        duration: const Duration(seconds: 4),
       );
       rethrow;
     }
@@ -147,9 +172,12 @@ class ParameterController extends GetxController {
       Get.snackbar(
         'Ошибка изменения порядка',
         'Не удалось изменить порядок параметров: $e',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+        margin: const EdgeInsets.only(top: 16, left: 16, right: 16),
+        backgroundColor: Get.theme.colorScheme.errorContainer,
+        colorText: Get.theme.colorScheme.onErrorContainer,
+        borderRadius: 12,
+        duration: const Duration(seconds: 4),
       );
       rethrow;
     }
@@ -157,27 +185,38 @@ class ParameterController extends GetxController {
 
   Future<void> reorderAllParameters(List<Parameter> reorderedParameters) async {
     try {
-      // Обновляем sort_order для всех параметров
-      for (int i = 0; i < reorderedParameters.length; i++) {
-        final parameter = reorderedParameters[i];
-        await _parameterRepository.updateParameterSortOrder(parameter.id!, i);
-        final index = parameters.indexWhere((p) => p.id == parameter.id);
-        if (index != -1) {
-          parameters[index] = parameters[index].copyWith(sortOrder: i);
-        }
-      }
+      print("ParameterController: Reordering ${reorderedParameters.length} parameters");
+      
+      // Логируем старый и новый порядок для отладки
+      print("Old order: ${parameters.map((p) => '${p.name}(${p.sortOrder})').toList()}");
+      print("New order: ${reorderedParameters.map((p) => p.name).toList()}");
+      
+      // Обновляем sort_order в базе данных одной batch операцией (более эффективно)
+      await _parameterRepository.updateParametersSortOrder(reorderedParameters);
+      
+      // Обновляем локальные объекты с новыми sort_order
+      final updatedParameters = reorderedParameters.asMap().entries.map((entry) {
+        final index = entry.key;
+        final parameter = entry.value;
+        return parameter.copyWith(sortOrder: index);
+      }).toList();
       
       // Переупорядочиваем локальный список
-      parameters.assignAll(reorderedParameters);
+      parameters.assignAll(updatedParameters);
       parameters.refresh();
+      
+      print("Updated order: ${parameters.map((p) => '${p.name}(${p.sortOrder})').toList()}");
     } catch (e) {
       print("Error reordering all parameters: $e");
       Get.snackbar(
         'Ошибка изменения порядка',
         'Не удалось изменить порядок параметров: $e',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+        margin: const EdgeInsets.only(top: 16, left: 16, right: 16),
+        backgroundColor: Get.theme.colorScheme.errorContainer,
+        colorText: Get.theme.colorScheme.onErrorContainer,
+        borderRadius: 12,
+        duration: const Duration(seconds: 4),
       );
       rethrow;
     }

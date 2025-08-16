@@ -40,7 +40,16 @@ class DailyRecordController extends GetxController {
     } catch (e) {
       print("Error loading daily records: $e");
       // Возможно, стоит показать Snackbar пользователю
-      Get.snackbar('Ошибка загрузки', 'Не удалось загрузить записи.');
+      Get.snackbar(
+        'Ошибка загрузки',
+        'Не удалось загрузить записи',
+        snackPosition: SnackPosition.TOP,
+        margin: const EdgeInsets.only(top: 16, left: 16, right: 16),
+        backgroundColor: Get.theme.colorScheme.errorContainer,
+        colorText: Get.theme.colorScheme.onErrorContainer,
+        borderRadius: 12,
+        duration: const Duration(seconds: 4),
+      );
     }
   }
 
@@ -64,7 +73,16 @@ class DailyRecordController extends GetxController {
       }
     } catch (e) {
       print("Error creating daily record: $e");
-      Get.snackbar('Ошибка', 'Не удалось сохранить запись.');
+      Get.snackbar(
+        'Ошибка',
+        'Не удалось сохранить запись',
+        snackPosition: SnackPosition.TOP,
+        margin: const EdgeInsets.only(top: 16, left: 16, right: 16),
+        backgroundColor: Get.theme.colorScheme.errorContainer,
+        colorText: Get.theme.colorScheme.onErrorContainer,
+        borderRadius: 12,
+        duration: const Duration(seconds: 4),
+      );
     }
   }
 
@@ -78,7 +96,16 @@ class DailyRecordController extends GetxController {
       }
     } catch (e) {
       print("Error updating daily record: $e");
-      Get.snackbar('Ошибка', 'Не удалось обновить запись.');
+      Get.snackbar(
+        'Ошибка',
+        'Не удалось обновить запись',
+        snackPosition: SnackPosition.TOP,
+        margin: const EdgeInsets.only(top: 16, left: 16, right: 16),
+        backgroundColor: Get.theme.colorScheme.errorContainer,
+        colorText: Get.theme.colorScheme.onErrorContainer,
+        borderRadius: 12,
+        duration: const Duration(seconds: 4),
+      );
     }
   }
 
@@ -88,7 +115,16 @@ class DailyRecordController extends GetxController {
       dailyRecords.removeWhere((record) => record.id == id);
     } catch (e) {
       print("Error deleting daily record: $e");
-      Get.snackbar('Ошибка', 'Не удалось удалить запись.');
+      Get.snackbar(
+        'Ошибка',
+        'Не удалось удалить запись',
+        snackPosition: SnackPosition.TOP,
+        margin: const EdgeInsets.only(top: 16, left: 16, right: 16),
+        backgroundColor: Get.theme.colorScheme.errorContainer,
+        colorText: Get.theme.colorScheme.onErrorContainer,
+        borderRadius: 12,
+        duration: const Duration(seconds: 4),
+      );
     }
   }
 
@@ -107,7 +143,16 @@ class DailyRecordController extends GetxController {
       // Проверяем, есть ли что экспортировать
       if (recordsToExport.isEmpty || parameters.isEmpty) {
          if (Get.isDialogOpen ?? false) Get.back(); // Закрываем индикатор загрузки
-         Get.snackbar('Информация', 'Нет данных для экспорта.');
+         Get.snackbar(
+           'Информация',
+           'Нет данных для экспорта',
+           snackPosition: SnackPosition.TOP,
+           margin: const EdgeInsets.only(top: 16, left: 16, right: 16),
+           backgroundColor: Get.theme.colorScheme.primaryContainer,
+           colorText: Get.theme.colorScheme.onPrimaryContainer,
+           borderRadius: 12,
+           duration: const Duration(seconds: 3),
+         );
          return;
       }
 
@@ -133,11 +178,29 @@ class DailyRecordController extends GetxController {
       } else if (result.status == ShareResultStatus.dismissed) {
         print('Диалог "Поделиться" был закрыт пользователем.');
         // Можно показать сообщение, что экспорт отменен
-         Get.snackbar('Отменено', 'Отправка файла была отменена.');
+         Get.snackbar(
+           'Отменено',
+           'Отправка файла была отменена',
+           snackPosition: SnackPosition.TOP,
+           margin: const EdgeInsets.only(top: 16, left: 16, right: 16),
+           backgroundColor: Get.theme.colorScheme.secondaryContainer,
+           colorText: Get.theme.colorScheme.onSecondaryContainer,
+           borderRadius: 12,
+           duration: const Duration(seconds: 3),
+         );
       } else {
          print('Отправка файла завершилась со статусом: ${result.status}');
          // Возможно, стоит показать общее сообщение об ошибке, если статус не success и не dismissed
-         Get.snackbar('Ошибка отправки', 'Не удалось отправить файл.');
+         Get.snackbar(
+           'Ошибка отправки',
+           'Не удалось отправить файл',
+           snackPosition: SnackPosition.TOP,
+           margin: const EdgeInsets.only(top: 16, left: 16, right: 16),
+           backgroundColor: Get.theme.colorScheme.errorContainer,
+           colorText: Get.theme.colorScheme.onErrorContainer,
+           borderRadius: 12,
+           duration: const Duration(seconds: 4),
+         );
       }
 
       // 6. (Опционально, но рекомендуется) Удаляем временный файл после завершения операции
@@ -156,7 +219,16 @@ class DailyRecordController extends GetxController {
     } catch (e) {
       print('Ошибка экспорта и отправки CSV: $e');
        if (Get.isDialogOpen ?? false) Get.back(); // Убедимся, что индикатор закрыт в случае ошибки
-      Get.snackbar('Ошибка', 'Не удалось подготовить файл CSV для отправки.');
+      Get.snackbar(
+        'Ошибка',
+        'Не удалось подготовить файл CSV для отправки',
+        snackPosition: SnackPosition.TOP,
+        margin: const EdgeInsets.only(top: 16, left: 16, right: 16),
+        backgroundColor: Get.theme.colorScheme.errorContainer,
+        colorText: Get.theme.colorScheme.onErrorContainer,
+        borderRadius: 12,
+        duration: const Duration(seconds: 4),
+      );
     }
   }
 

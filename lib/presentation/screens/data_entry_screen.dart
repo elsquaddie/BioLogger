@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../domain/controllers/data_entry_controller.dart';
 import '../../models/parameter.dart';
 import '../theme/app_theme.dart';
+import '../widgets/ui_components/index.dart';
 import 'main_navigation_screen.dart';
 import '../../utils/parameter_icons.dart';
 
@@ -23,6 +24,8 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
   double _ratingValue = 1.0;
   bool _yesNoValue = false;
   final RxBool _isListViewMode = false.obs;
+  bool _isProgrammaticPageChange = false; // Флаг для игнорирования программных изменений страницы
+  int? _targetPageIndex; // Целевой индекс страницы при программной навигации
 
   @override
   void initState() {
@@ -54,11 +57,18 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
         // Анимируем только если PageController привязан к PageView
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (_pageController.hasClients) {
+            _isProgrammaticPageChange = true; // Устанавливаем флаг перед программным изменением
+            _targetPageIndex = index; // Сохраняем целевой индекс
             _pageController.animateToPage(
               index,
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeInOut,
-            );
+            ).then((_) {
+              // Сбрасываем флаг после завершения анимации
+              print("DataEntryScreen: Animation completed (from ever listener), resetting programmatic flag (backup)");
+              _isProgrammaticPageChange = false;
+              _targetPageIndex = null;
+            });
           }
         });
       }
@@ -67,6 +77,12 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
 
   void _loadCurrentParameterData() {
     final currentParameter = _dataEntryController.currentParameter;
+    final currentIndex = _dataEntryController.currentParameterIndex.value;
+    
+    print("DataEntryScreen: _loadCurrentParameterData called");
+    print("DataEntryScreen: currentParameterIndex = $currentIndex");
+    print("DataEntryScreen: currentParameter = ${currentParameter?.name} (ID: ${currentParameter?.id})");
+    
     if (currentParameter != null) {
       final parameterId = currentParameter.id.toString();
       final value = _dataEntryController.enteredValues[parameterId]?.toString() ?? '';
@@ -148,22 +164,25 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
     final theme = Theme.of(context);
     
     return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
+      backgroundColor: AppTheme.backgroundLight,
       appBar: AppBar(
         title: Obx(() {
           final selectedDate = _dataEntryController.selectedDate.value;
           final dateText = DateFormat('dd.MM.yyyy').format(selectedDate);
           return Text('Данные за $dateText');
         }),
+        centerTitle: true,
+        elevation: 0,
+        backgroundColor: AppTheme.brandGreen,
+        foregroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            // Если мы в режиме списка, возвращаемся к режиму редактирования
-            if (_isListViewMode.value) {
-              _isListViewMode.value = false;
-              _loadCurrentParameterData();
+            // Если мы в режиме редактирования параметра, переходим к списку параметров
+            if (!_isListViewMode.value) {
+              _isListViewMode.value = true;
             } else {
-              // Если мы в режиме редактирования, возвращаемся на главную
+              // Если мы в режиме списка параметров, возвращаемся на главную
               try {
                 final navigationController = Get.find<NavigationController>();
                 navigationController.goToHome();
@@ -274,8 +293,30 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
             controller: _pageController,
             itemCount: parameters.length,
             onPageChanged: (index) {
+              print("DataEntryScreen: PageView.onPageChanged called with index $index, isProgrammatic: $_isProgrammaticPageChange, targetIndex: $_targetPageIndex");
+              
+              // Игнорируем программные изменения страницы
+              if (_isProgrammaticPageChange) {
+                print("DataEntryScreen: Ignoring programmatic page change");
+                
+                // Если достигли целевого индекса, сбрасываем флаг
+                if (_targetPageIndex != null && index == _targetPageIndex) {
+                  print("DataEntryScreen: Reached target page index $_targetPageIndex, resetting flags");
+                  _isProgrammaticPageChange = false;
+                  _targetPageIndex = null;
+                }
+                return;
+              }
+              
+              // Проверяем, соответствует ли index текущему индексу контроллера
+              final currentControllerIndex = _dataEntryController.currentParameterIndex.value;
+              if (index == currentControllerIndex) {
+                print("DataEntryScreen: PageView index matches controller index, ignoring");
+                return;
+              }
+              
               _saveCurrentParameter(); // Сохраняем текущий параметр
-              _dataEntryController.currentParameterIndex.value = index;
+              _dataEntryController.setCurrentParameterIndex(index, "PageView.onPageChanged by user swipe");
             },
             itemBuilder: (context, index) {
               final parameter = parameters[index];
@@ -327,37 +368,39 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
 
   /// Строит виджет выбора даты
   Widget _buildDatePicker(ThemeData theme) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceVariant,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.calendar_today, color: theme.colorScheme.primary),
-          const SizedBox(width: 12),
-          Text('Дата:', style: theme.textTheme.titleMedium),
-          const Spacer(),
-          TextButton.icon(
-            onPressed: () async {
-              DateTime? pickedDate = await showDatePicker(
-                context: context,
-                initialDate: _dataEntryController.selectedDate.value,
-                firstDate: DateTime(2020),
-                lastDate: DateTime.now(),
-              );
-              if (pickedDate != null) {
-                _dataEntryController.selectDate(pickedDate);
-              }
-            },
-            icon: const Icon(Icons.edit),
-            label: Text(
-              DateFormat('dd.MM.yyyy').format(_dataEntryController.selectedDate.value),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: AppCard(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            TintedIconBox(
+              icon: Icons.calendar_today,
+              size: 40,
+              iconSize: 20,
             ),
-          ),
-        ],
+            const SizedBox(width: 12),
+            Text('Дата:', style: theme.textTheme.titleMedium),
+            const Spacer(),
+            TextButton.icon(
+              onPressed: () async {
+                DateTime? pickedDate = await showDatePicker(
+                  context: context,
+                  initialDate: _dataEntryController.selectedDate.value,
+                  firstDate: DateTime(2020),
+                  lastDate: DateTime.now(),
+                );
+                if (pickedDate != null) {
+                  _dataEntryController.selectDate(pickedDate);
+                }
+              },
+              icon: const Icon(Icons.edit),
+              label: Text(
+                DateFormat('dd.MM.yyyy').format(_dataEntryController.selectedDate.value),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -366,7 +409,7 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
   Widget _buildNavigationButtons(ThemeData theme) {
     return Container(
       padding: const EdgeInsets.all(16),
-      child: Row(
+      child: Obx(() => Row(
         children: [
           Expanded(
             child: OutlinedButton.icon(
@@ -382,17 +425,15 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
           ),
           const SizedBox(width: 16),
           Expanded(
-            child: ElevatedButton.icon(
+            child: PrimaryButton(
+              text: _dataEntryController.isLastParameter ? 'Сохранить' : 'Далее',
+              icon: _dataEntryController.isLastParameter ? Icons.save : Icons.arrow_forward,
               onPressed: _nextParameter,
-              icon: Icon(_dataEntryController.isLastParameter ? Icons.save : Icons.arrow_forward),
-              label: Text(_dataEntryController.isLastParameter ? 'Сохранить' : 'Далее'),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
+              padding: const EdgeInsets.symmetric(vertical: 16),
             ),
           ),
         ],
-      ),
+      )),
     );
   }
 
@@ -413,7 +454,17 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
           displayValue = value.length > 30 ? '${value.substring(0, 30)}...' : value;
           break;
         case 'Rating':
-          displayValue = '$value/10';
+          // Получаем максимальное значение из scaleOptions
+          int maxValue = 10; // Дефолт
+          if (parameter.scaleOptions != null) {
+            for (String option in parameter.scaleOptions!) {
+              if (option.startsWith('max:')) {
+                maxValue = int.tryParse(option.substring(4)) ?? 10;
+                break;
+              }
+            }
+          }
+          displayValue = '$value/$maxValue';
           break;
         case 'YesNo':
           displayValue = value;
@@ -440,53 +491,55 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
     
     return InkWell(
       onTap: () {
-        // Находим правильный индекс параметра в списке parametersForEntry
-        final correctIndex = _dataEntryController.parametersForEntry.indexWhere((p) => p.id == parameter.id);
-        if (correctIndex != -1) {
-          _isListViewMode.value = false;
-          _dataEntryController.setInitialViewMode('edit');
-          _dataEntryController.currentParameterIndex.value = correctIndex;
+        // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Используем новый метод для установки параметра по ID
+        print("DataEntryScreen: User tapped parameter '${parameter.name}' with ID ${parameter.id}");
+        
+        // Устанавливаем параметр для навигации по ID
+        _dataEntryController.setParameterForNavigation(parameter.id!);
+        _dataEntryController.setInitialViewMode('edit');
+        _isListViewMode.value = false;
+        
+        // Анимируем к правильной странице после установки индекса
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          final currentIndex = _dataEntryController.currentParameterIndex.value;
+          print("DataEntryScreen: Animating to page index $currentIndex");
           
-          // Принудительно переводим PageController на правильную страницу
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (_pageController.hasClients) {
-              _pageController.animateToPage(
-                correctIndex,
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
-              );
-            }
-            _loadCurrentParameterData();
-          });
-        }
+          if (_pageController.hasClients && currentIndex >= 0) {
+            _isProgrammaticPageChange = true; // Устанавливаем флаг перед программным изменением
+            _targetPageIndex = currentIndex; // Сохраняем целевой индекс
+            _pageController.animateToPage(
+              currentIndex,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+            ).then((_) {
+              // Дополнительная защита - сбрасываем флаги после завершения анимации
+              print("DataEntryScreen: Animation completed, resetting programmatic flag (backup)");
+              _isProgrammaticPageChange = false;
+              _targetPageIndex = null;
+            });
+          }
+          _loadCurrentParameterData();
+        });
       },
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-        padding: const EdgeInsets.all(16),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-        ),
-        child: Row(
-          children: [
-            // Иконка параметра - точная копия из values.html
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF2F3F1),
-                borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        child: AppCard(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              // Иконка параметра в новом стиле с кастомными цветами
+              SmallTintedIconBox(
+                icon: ParameterIcons.getIcon(parameter),
+                size: 48,
+                iconSize: 24,
+                backgroundColor: ParameterIcons.getIconBackgroundColor(parameter, theme.colorScheme),
+                iconColor: ParameterIcons.getIconColor(parameter, theme.colorScheme),
               ),
-              child: Icon(
-                ParameterIcons.getIcon(parameter),
-                size: 24,
-                color: const Color(0xFF141613),
-              ),
-            ),
-            const SizedBox(width: 16),
-            
-            // Название и значение
-            Expanded(
-              child: Column(
+              const SizedBox(width: 16),
+              
+              // Название и значение
+              Expanded(
+                child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
@@ -509,9 +562,10 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -524,27 +578,16 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
       child: Column(
         children: [
           // Большая иконка и информация о параметре
-          Container(
-            width: double.infinity,
+          AppCard(
             padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF2F3F1),
-              borderRadius: BorderRadius.circular(16),
-            ),
             child: Column(
               children: [
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Icon(
-                    ParameterIcons.getIcon(parameter),
-                    size: 40,
-                    color: const Color(0xFF141613),
-                  ),
+                TintedIconBox(
+                  icon: ParameterIcons.getIcon(parameter),
+                  size: 80,
+                  iconSize: 40,
+                  backgroundColor: ParameterIcons.getIconBackgroundColor(parameter, theme.colorScheme),
+                  iconColor: ParameterIcons.getIconColor(parameter, theme.colorScheme),
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -589,8 +632,6 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
               _dataEntryController.updateEnteredComment(parameterId, value);
             },
           ),
-          
-          const Spacer(),
         ],
       ),
     );
@@ -639,6 +680,52 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
         );
 
       case 'Rating':
+        // Парсим настройки шкалы из scaleOptions
+        int minValue = 1;
+        int maxValue = 10;
+        String leftLabel = 'Плохо';
+        String rightLabel = 'Отлично';
+        
+        if (parameter.scaleOptions != null) {
+          print('DataEntryScreen: Parsing scaleOptions for ${parameter.name}: ${parameter.scaleOptions}');
+          for (String option in parameter.scaleOptions!) {
+            if (option.startsWith('min:')) {
+              final newMin = int.tryParse(option.substring(4)) ?? 1;
+              minValue = newMin;
+              print('DataEntryScreen: Found min value: $newMin');
+            } else if (option.startsWith('max:')) {
+              final newMax = int.tryParse(option.substring(4)) ?? 10;
+              maxValue = newMax;
+              print('DataEntryScreen: Found max value: $newMax');
+            } else if (option.startsWith('left:')) {
+              leftLabel = option.substring(5);
+              print('DataEntryScreen: Found left label: $leftLabel');
+            } else if (option.startsWith('right:')) {
+              rightLabel = option.substring(6);
+              print('DataEntryScreen: Found right label: $rightLabel');
+            }
+            // Игнорируем другие опции (например, color:)
+          }
+        }
+        
+        // Совместимость со старыми пресет параметрами
+        if (parameter.isPreset && parameter.scaleOptions != null && parameter.scaleOptions!.isNotEmpty) {
+          // Старые пресет параметры используют scaleOptions как массив значений ["1","2","3",...]
+          final firstOption = parameter.scaleOptions!.first;
+          if (!firstOption.contains(':')) {
+            // Это старый формат - используем длину массива как максимальное значение
+            maxValue = parameter.scaleOptions!.length;
+            leftLabel = 'Плохо';
+            rightLabel = 'Отлично';
+          }
+        }
+        
+        print('DataEntryScreen: Rating scale config for ${parameter.name}: min=$minValue, max=$maxValue, left="$leftLabel", right="$rightLabel"');
+        
+        // Убеждаемся что _ratingValue в допустимых пределах
+        if (_ratingValue < minValue) _ratingValue = minValue.toDouble();
+        if (_ratingValue > maxValue) _ratingValue = maxValue.toDouble();
+        
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -660,15 +747,27 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('1', style: theme.textTheme.bodyMedium),
-                      Text('10', style: theme.textTheme.bodyMedium),
+                      Expanded(
+                        child: Text(
+                          leftLabel,
+                          style: theme.textTheme.bodyMedium,
+                          textAlign: TextAlign.left,
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          rightLabel,
+                          style: theme.textTheme.bodyMedium,
+                          textAlign: TextAlign.right,
+                        ),
+                      ),
                     ],
                   ),
                   Slider(
                     value: _ratingValue,
-                    min: 1.0,
-                    max: 10.0,
-                    divisions: 9,
+                    min: minValue.toDouble(),
+                    max: maxValue.toDouble(),
+                    divisions: maxValue - minValue,
                     label: _ratingValue.round().toString(),
                     onChanged: (value) {
                       setState(() {
@@ -677,6 +776,14 @@ class _DataEntryScreenState extends State<DataEntryScreen> {
                       final parameterId = parameter.id.toString();
                       _dataEntryController.updateEnteredValue(parameterId, value.round().toString());
                     },
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('$minValue', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+                      Text('$maxValue', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+                    ],
                   ),
                 ],
               ),

@@ -14,34 +14,39 @@ class CalculateStreakUseCase {
       
       if (allRecords.isEmpty) return 0;
 
-      // Сортируем записи по дате в убывающем порядке (от новых к старым)
-      final sortedRecords = List<DailyRecord>.from(allRecords);
-      sortedRecords.sort((a, b) => b.date.compareTo(a.date));
-
       final today = DateTime.now();
       final normalizedToday = DateTime(today.year, today.month, today.day);
       
       int consecutiveDays = 0;
-      DateTime expectedDate = normalizedToday;
+      DateTime currentCheckDate = normalizedToday;
 
-      // Проверяем каждый день начиная с сегодня
-      for (final record in sortedRecords) {
+      // Создаем Map для быстрого поиска записей по дате
+      final recordsByDate = <DateTime, DailyRecord>{};
+      for (final record in allRecords) {
         final recordDate = DateTime(record.date.year, record.date.month, record.date.day);
+        recordsByDate[recordDate] = record;
+      }
+
+      // Проверяем каждый день начиная с сегодня и идем назад
+      while (true) {
+        final record = recordsByDate[currentCheckDate];
         
-        if (recordDate == expectedDate) {
+        if (record != null) {
           // Проверяем что запись действительно содержит данные
           if (record.dataValues.isNotEmpty && 
               record.dataValues.values.any((value) => 
                 value != null && value.toString().trim().isNotEmpty)) {
             consecutiveDays++;
-            expectedDate = expectedDate.subtract(const Duration(days: 1));
+            // Переходим к предыдущему дню
+            currentCheckDate = currentCheckDate.subtract(const Duration(days: 1));
           } else {
-            break; // Запись есть, но пустая - прерываем серию
+            // Запись есть, но пустая - прерываем серию
+            break;
           }
-        } else if (recordDate.isBefore(expectedDate)) {
-          break; // Пропущен день - прерываем серию
+        } else {
+          // Нет записи за этот день - прерываем серию
+          break;
         }
-        // Если recordDate.isAfter(expectedDate) - просто продолжаем поиск
       }
 
       return consecutiveDays;

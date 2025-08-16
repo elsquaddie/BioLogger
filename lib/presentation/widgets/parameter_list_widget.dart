@@ -6,6 +6,7 @@ import '../screens/parameter_create_screen.dart';
 import '../screens/parameter_edit_screen.dart';
 import '../theme/app_theme.dart';
 import '../animations/page_transitions.dart';
+import '../widgets/ui_components/index.dart';
 import '../../utils/parameter_icons.dart';
 
 class ParameterListWidget extends StatelessWidget {
@@ -73,12 +74,63 @@ class ParameterListWidget extends StatelessWidget {
           );
         } else {
           // Единый список всех параметров
-          return Stack(
+          return Column(
             children: [
-              Padding(
-                padding: const EdgeInsets.only(bottom: 80), // Отступ для FAB
+              // Кнопка добавления параметра в виде элемента списка
+              InkWell(
+                onTap: () => Navigator.of(context).pushWithTransition(
+                  const ParameterCreateScreen(),
+                  transition: PageTransitionType.slideFromBottom,
+                ),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        color: theme.colorScheme.outline.withOpacity(0.2),
+                        width: 1,
+                      ),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: AppTheme.tintGreen,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          Icons.add,
+                          color: AppTheme.brandGreen,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Text(
+                          'Добавить параметр',
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            fontWeight: FontWeight.w500,
+                            color: AppTheme.brandGreen,
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        Icons.arrow_forward_ios,
+                        color: theme.colorScheme.onSurfaceVariant,
+                        size: 16,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              
+              // Основной список параметров
+              Expanded(
                 child: ReorderableListView.builder(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(0),
                   itemCount: _parameterController.parameters.length,
                   onReorder: (oldIndex, newIndex) async {
                     if (newIndex > oldIndex) {
@@ -93,22 +145,14 @@ class ParameterListWidget extends StatelessWidget {
                     await _parameterController.reorderAllParameters(reorderedParams);
                   },
                   itemBuilder: (context, index) {
+                    // CRITICAL FIX: Get parameter by ID from controller to avoid reordering issues
                     final parameter = _parameterController.parameters[index];
+                    
+                    // DEBUG: Log parameter being built at index
+                    print("ReorderableListView: Building tile at index $index for parameter '${parameter.name}' with ID ${parameter.id}");
+                    
                     return _buildParameterTile(context, parameter, theme, index);
                   },
-                ),
-              ),
-              // FloatingActionButton остается для функциональности
-              Positioned(
-                bottom: 16,
-                right: 16,
-                child: FloatingActionButton.extended(
-                  onPressed: () => Navigator.of(context).pushWithTransition(
-                    const ParameterCreateScreen(),
-                    transition: PageTransitionType.slideFromBottom,
-                  ),
-                  icon: const Icon(Icons.add),
-                  label: const Text('Добавить'),
                 ),
               ),
             ],
@@ -119,153 +163,152 @@ class ParameterListWidget extends StatelessWidget {
 
   // Единый виджет для всех параметров
   Widget _buildParameterTile(BuildContext context, Parameter parameter, ThemeData theme, int index) {
-    return Card(
+    // Создаем строку с типом и единицей измерения
+    String typeAndUnit = parameter.dataType;
+    if (parameter.unit != null && parameter.unit!.isNotEmpty) {
+      typeAndUnit += ' • ${parameter.unit}';
+    }
+    
+    // CRITICAL FIX: Capture parameter ID to avoid closure issues
+    final parameterToEdit = parameter; // Explicit local copy
+    final parameterId = parameter.id;
+    
+    return Container(
       key: ValueKey(parameter.id),
-      margin: const EdgeInsets.symmetric(vertical: 6),
       child: InkWell(
-        onTap: () => Navigator.of(context).pushWithTransition(
-          ParameterEditScreen(parameter: parameter),
-          transition: PageTransitionType.slideAndFade,
-        ),
-        borderRadius: BorderRadius.circular(AppTheme.cardBorderRadius),
+        onTap: () {
+          // CRITICAL FIX: Find parameter by ID to ensure we get the correct one
+          final currentParameter = _parameterController.parameters.firstWhere(
+            (p) => p.id == parameterId,
+            orElse: () => parameterToEdit, // fallback
+          );
+          
+          // DEBUG: Log which parameter is being tapped
+          print("Navigation Debug: Tapping parameter '${currentParameter.name}' with ID: ${currentParameter.id}");
+          
+          Navigator.of(context).pushWithTransition(
+            ParameterEditScreen(parameter: currentParameter),
+            transition: PageTransitionType.slideAndFade,
+          );
+        },
         child: Padding(
-          padding: AppTheme.cardPadding,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             children: [
-              // Drag handle + Иконка
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
+              // Drag handle
+              ReorderableDragStartListener(
+                index: index,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  child: Icon(
                     Icons.drag_handle,
                     color: theme.colorScheme.onSurfaceVariant,
+                    size: 20,
                   ),
-                  const SizedBox(width: 8),
-                  ParameterIcons.buildParameterIcon(
-                    parameter,
-                    context,
-                    size: 24.0,
-                    padding: 12.0,
-                  ),
-                ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Иконка параметра с кастомными цветами
+              SmallTintedIconBox(
+                icon: ParameterIcons.getIcon(parameter),
+                size: 48,
+                iconSize: 24,
+                backgroundColor: ParameterIcons.getIconBackgroundColor(parameter, theme.colorScheme),
+                iconColor: ParameterIcons.getIconColor(parameter, theme.colorScheme),
               ),
               const SizedBox(width: 16),
-              // Основная информация
+              // Название и тип данных
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       parameter.name,
-                      style: theme.textTheme.titleMedium,
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF1F2937),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 4,
-                      children: [
-                        Chip(
-                          label: Text(
-                            parameter.dataType,
-                            style: theme.textTheme.bodySmall,
-                          ),
-                          backgroundColor: theme.colorScheme.secondaryContainer,
-                          side: BorderSide.none,
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                        ),
-                        if (parameter.isPreset)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.primaryContainer,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.star,
-                                  size: 12,
-                                  color: theme.colorScheme.onPrimaryContainer,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'Пресет',
-                                  style: theme.textTheme.labelSmall?.copyWith(
-                                    color: theme.colorScheme.onPrimaryContainer,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        if (parameter.unit != null && parameter.unit!.isNotEmpty)
-                          Chip(
-                            label: Text(
-                              parameter.unit!,
-                              style: theme.textTheme.bodySmall,
-                            ),
-                            backgroundColor: theme.colorScheme.surfaceVariant,
-                            side: BorderSide.none,
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                          ),
-                      ],
+                    Text(
+                      typeAndUnit,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: const Color(0xFF6B7280),
+                        fontWeight: FontWeight.normal,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
-              // Кнопки управления
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Переключатель активности
-                  Switch(
-                    value: parameter.isEnabled,
-                    onChanged: (value) async {
-                      await _parameterController.toggleParameterEnabled(parameter.id!, value);
-                    },
+              
+              // Переключатель активности
+              Switch(
+                value: parameterToEdit.isEnabled,
+                onChanged: (value) async {
+                  // DEBUG: Log switch toggle
+                  print("Navigation Debug: Toggle switch for parameter '${parameterToEdit.name}' with ID: $parameterId");
+                  
+                  await _parameterController.toggleParameterEnabled(parameterId!, value);
+                },
+              ),
+              const SizedBox(width: 8),
+              
+              // Меню действий
+              PopupMenuButton<String>(
+                onSelected: (value) {
+                  // CRITICAL FIX: Find parameter by ID for popup actions too
+                  final currentParameter = _parameterController.parameters.firstWhere(
+                    (p) => p.id == parameterId,
+                    orElse: () => parameterToEdit, // fallback
+                  );
+                  
+                  if (value == 'edit') {
+                    // DEBUG: Log popup menu edit action
+                    print("Navigation Debug: Popup edit for parameter '${currentParameter.name}' with ID: ${currentParameter.id}");
+                    
+                    Navigator.of(context).pushWithTransition(
+                      ParameterEditScreen(parameter: currentParameter),
+                      transition: PageTransitionType.slideAndFade,
+                    );
+                  } else if (value == 'delete') {
+                    _showDeleteConfirmationDialog(context, currentParameter);
+                  }
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 'edit',
+                    child: Row(
+                      children: [
+                        Icon(Icons.edit, color: theme.colorScheme.primary),
+                        const SizedBox(width: 12),
+                        const Text('Редактировать'),
+                      ],
+                    ),
                   ),
-                  const SizedBox(width: 8),
-                  // Меню действий
-                  PopupMenuButton<String>(
-                    onSelected: (value) {
-                      if (value == 'edit') {
-                        Navigator.of(context).pushWithTransition(
-                          ParameterEditScreen(parameter: parameter),
-                          transition: PageTransitionType.slideAndFade,
-                        );
-                      } else if (value == 'delete') {
-                        _showDeleteConfirmationDialog(context, parameter);
-                      }
-                    },
-                    itemBuilder: (context) => [
-                      PopupMenuItem(
-                        value: 'edit',
-                        child: Row(
-                          children: [
-                            Icon(Icons.edit, color: theme.colorScheme.primary),
-                            const SizedBox(width: 12),
-                            const Text('Редактировать'),
-                          ],
-                        ),
+                  if (!parameter.isPreset) // Только для пользовательских параметров
+                    PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete, color: theme.colorScheme.error),
+                          const SizedBox(width: 12),
+                          const Text('Удалить'),
+                        ],
                       ),
-                      if (!parameter.isPreset) // Только для пользовательских параметров
-                        PopupMenuItem(
-                          value: 'delete',
-                          child: Row(
-                            children: [
-                              Icon(Icons.delete, color: theme.colorScheme.error),
-                              const SizedBox(width: 12),
-                              const Text('Удалить'),
-                            ],
-                          ),
-                        ),
-                    ],
-                  ),
+                    ),
                 ],
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  child: Icon(
+                    Icons.more_vert,
+                    color: theme.colorScheme.onSurfaceVariant,
+                    size: 20,
+                  ),
+                ),
               ),
             ],
           ),
@@ -279,12 +322,15 @@ class ParameterListWidget extends StatelessWidget {
     
     // Проверяем, что это не пресет параметр
     if (parameter.isPreset) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Встроенные параметры нельзя удалить. Вы можете их отключить.'),
-          backgroundColor: theme.colorScheme.errorContainer,
-          behavior: SnackBarBehavior.floating,
-        ),
+      Get.snackbar(
+        'Невозможно удалить',
+        'Встроенные параметры нельзя удалить. Вы можете их отключить.',
+        snackPosition: SnackPosition.TOP,
+        margin: const EdgeInsets.only(top: 16, left: 16, right: 16),
+        backgroundColor: Get.theme.colorScheme.errorContainer,
+        colorText: Get.theme.colorScheme.onErrorContainer,
+        borderRadius: 12,
+        duration: const Duration(seconds: 4),
       );
       return;
     }
@@ -342,22 +388,28 @@ class ParameterListWidget extends StatelessWidget {
                   await _parameterController.deleteParameter(parameter.id!);
                   Navigator.of(context).pop(); // Закрыть loading
                   
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Параметр "${parameter.name}" удален'),
-                      backgroundColor: theme.colorScheme.primaryContainer,
-                      behavior: SnackBarBehavior.floating,
-                    ),
+                  Get.snackbar(
+                    'Успех',
+                    'Параметр "${parameter.name}" удален',
+                    snackPosition: SnackPosition.TOP,
+                    margin: const EdgeInsets.only(top: 16, left: 16, right: 16),
+                    backgroundColor: Get.theme.colorScheme.primaryContainer,
+                    colorText: Get.theme.colorScheme.onPrimaryContainer,
+                    borderRadius: 12,
+                    duration: const Duration(seconds: 3),
                   );
                 } catch (e) {
                   Navigator.of(context).pop(); // Закрыть loading
                   
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Ошибка удаления: ${e.toString()}'),
-                      backgroundColor: theme.colorScheme.error,
-                      behavior: SnackBarBehavior.floating,
-                    ),
+                  Get.snackbar(
+                    'Ошибка',
+                    'Ошибка удаления: ${e.toString()}',
+                    snackPosition: SnackPosition.TOP,
+                    margin: const EdgeInsets.only(top: 16, left: 16, right: 16),
+                    backgroundColor: Get.theme.colorScheme.errorContainer,
+                    colorText: Get.theme.colorScheme.onErrorContainer,
+                    borderRadius: 12,
+                    duration: const Duration(seconds: 4),
                   );
                 }
               },

@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import '../../domain/controllers/parameter_controller.dart';
 import '../../domain/controllers/metrics_tab_controller.dart';
 import '../widgets/parameter_list_widget.dart';
+import '../widgets/ui_components/index.dart';
+import '../theme/app_theme.dart';
 import '../animations/page_transitions.dart';
 import 'parameter_create_screen.dart';
 
@@ -16,16 +18,16 @@ class MetricsScreen extends StatelessWidget {
     final metricsTabController = Get.find<MetricsTabController>();
     
     return Obx(() => Scaffold(
-      backgroundColor: theme.colorScheme.surface,
+      backgroundColor: AppTheme.backgroundLight,
       appBar: AppBar(
         title: Text(
           metricsTabController.isShowingParameterList.value 
             ? 'Управление параметрами' 
-            : 'Метрики'
+            : 'Данные'
         ),
         centerTitle: true,
         elevation: 0,
-        backgroundColor: theme.colorScheme.primary,
+        backgroundColor: AppTheme.brandGreen,
         foregroundColor: Colors.white,
         leading: metricsTabController.isShowingParameterList.value 
           ? IconButton(
@@ -33,18 +35,7 @@ class MetricsScreen extends StatelessWidget {
               onPressed: () => metricsTabController.showMetrics(),
             )
           : null,
-        actions: metricsTabController.isShowingParameterList.value
-          ? [
-              IconButton(
-                icon: const Icon(Icons.add),
-                tooltip: 'Создать параметр',
-                onPressed: () => Navigator.of(context).pushWithTransition(
-                  const ParameterCreateScreen(),
-                  transition: PageTransitionType.slideFromBottom,
-                ),
-              ),
-            ]
-          : null,
+        actions: null,
       ),
       body: metricsTabController.isShowingParameterList.value
         ? ParameterListWidget() // Новый виджет без Scaffold
@@ -82,63 +73,52 @@ class MetricsScreen extends StatelessWidget {
           const SizedBox(height: 24),
           
           // Статистика параметров
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.analytics,
-                    color: theme.colorScheme.primary,
-                    size: 32,
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Параметры для отслеживания',
-                          style: theme.textTheme.titleMedium,
+          AppCard(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                TintedIconBox(
+                  icon: Icons.analytics,
+                  size: 56,
+                  iconSize: 28,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Параметры для отслеживания',
+                        style: theme.textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 4),
+                      Obx(() => Text(
+                        'Всего создано: ${parameterController.parameters.length}',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurface.withOpacity(0.7),
                         ),
-                        const SizedBox(height: 4),
-                        Obx(() => Text(
-                          'Всего создано: ${parameterController.parameters.length}',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.7),
-                          ),
-                        )),
-                      ],
-                    ),
+                      )),
+                    ],
                   ),
-                  Icon(
-                    Icons.arrow_forward_ios,
-                    color: theme.colorScheme.onSurface.withOpacity(0.5),
-                    size: 16,
-                  ),
-                ],
-              ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  color: theme.colorScheme.onSurface.withOpacity(0.5),
+                  size: 16,
+                ),
+              ],
             ),
           ),
           
           const SizedBox(height: 16),
           
           // Кнопка управления параметрами - теперь вызывает контроллер
-          SizedBox(
+          PrimaryButton(
+            text: 'Управлять параметрами',
+            icon: Icons.tune,
+            onPressed: () => metricsTabController.showParameterList(),
             width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () => metricsTabController.showParameterList(),
-              icon: const Icon(Icons.tune),
-              label: const Text('Управлять параметрами'),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                backgroundColor: theme.colorScheme.primary,
-                foregroundColor: theme.colorScheme.onPrimary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
+            padding: const EdgeInsets.symmetric(vertical: 16),
           ),
           
           const SizedBox(height: 32),
@@ -202,73 +182,67 @@ class MetricsScreen extends StatelessWidget {
   }) {
     final theme = Theme.of(context);
     
-    return Card(
+    return AppCard(
       child: Opacity(
         opacity: isComingSoon ? 0.6 : 1.0,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  icon,
-                  color: theme.colorScheme.onPrimaryContainer,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
+        child: Row(
+          children: [
+            SmallTintedIconBox(
+              icon: icon,
+              size: 48,
+              iconSize: 24,
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
                           title,
                           style: theme.textTheme.titleMedium,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        if (isComingSoon) ...[
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.secondary.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              'Скоро',
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: theme.colorScheme.secondary,
-                                fontWeight: FontWeight.w600,
-                              ),
+                      ),
+                      if (isComingSoon) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.secondary.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            'Скоро',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.secondary,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                        ],
+                        ),
                       ],
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    description,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.7),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      description,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withOpacity(0.7),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              if (!isComingSoon)
-                Icon(
-                  Icons.arrow_forward_ios,
-                  color: theme.colorScheme.onSurface.withOpacity(0.5),
-                  size: 16,
-                ),
-            ],
-          ),
+            ),
+            if (!isComingSoon)
+              Icon(
+                Icons.arrow_forward_ios,
+                color: theme.colorScheme.onSurface.withOpacity(0.5),
+                size: 16,
+              ),
+          ],
         ),
       ),
     );

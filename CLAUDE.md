@@ -2,10 +2,22 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## My Persona
+
+Act as a Senior Flutter Developer and UI/UX expert. My primary goal is to write clean, maintainable, and efficient code following Clean Architecture principles. I prioritize creating a smooth, intuitive, and visually appealing user experience. When implementing solutions, I think step-by-step, focusing on fixing the root cause of issues and ensuring new code is robust and well-tested.
+
 ## Project Overview
 
-BioLogger is a Flutter application for tracking personal metrics and life quality data. Users define custom parameters (Sleep Hours, Mood, etc.), log daily progress, and export data to CSV format.
+BioLogger is a Flutter application for tracking personal metrics and life quality data. It's built using Flutter, GetX for state management, and SQLite for local storage, following a Clean Architecture pattern. The app allows users to define custom parameters, log daily data, and export it to CSV.
 
+## Key Principles for This Project
+
+*   **User-Centricity:** All changes should improve the user's journey. Reduce clicks, provide clear feedback, and ensure the UI is intuitive.
+*   **State Management with GetX:** Strictly use GetX reactive patterns (`.obs`, `Obx`) for UI updates. Ensure controllers are decoupled and managed through `Get.lazyPut`.
+*   **Clean Architecture Adherence:** Respect the boundaries between the Presentation, Domain, and Data layers. UI logic belongs in screens/widgets, business logic in controllers/use cases, and data handling in repositories/DAOs.
+*   **Code Quality:** Run `flutter analyze` before every commit. Write descriptive commit messages. Keep code DRY (Don't Repeat Yourself).
+
+---
 ## Essential Commands
 
 ```bash
@@ -31,42 +43,157 @@ flutter build apk --release   # Production APK
 # Hot reload during development
 r                             # Hot reload (in flutter run console)
 R                             # Hot restart (in flutter run console)
+
+# Database debugging
+flutter run --debug           # For examining SQLite operations with print statements
 ```
 
-## ПРИОРИТЕТ: Исправление UI/UX багов (Август 2025)
+## Dependency Management
+```bash
+# Always run after pulling changes or modifying pubspec.yaml
+flutter pub get
 
-**ЗАДАЧА 1: Улучшение UX на экране ввода данных**
-- **Проблема 1:** При переключении между параметрами текстовые поля не получают фокус автоматически, что требует лишнего клика от пользователя.
-- **Решение 1:** В `_loadCurrentParameterData` гарантировать, что `_valueFocusNode.requestFocus()` вызывается для типов 'Number' и 'Text'.
-- **Проблема 2:** Чип "Пресет" на экране ввода данных занимает место и не несет полезной информации для пользователя в данный момент.
-- **Решение 2:** Убрать отображение чипа "Пресет" из `_buildParameterPage`.
-- **Затронутый файл:** `lib/presentation/screens/data_entry_screen.dart`
+# Check for dependency issues
+flutter pub deps
+flutter pub outdated
+```
 
-**ЗАДАЧА 2: Исправление Snackbar и клавиатуры после сохранения**
-- **Проблема 1:** Уведомление "Успех" после сохранения перекрывает нижнюю панель навигации (см. скриншот 2).
-- **Решение 1:** Добавить `margin` к `Get.snackbar`, чтобы он отображался выше навигационной панели.
-- **Проблема 2:** Клавиатура не закрывается автоматически после сохранения и перехода на главный экран.
-- **Решение 2:** Принудительно убирать фокус (`unfocus`) перед вызовом `saveDailyRecord`.
-- **Затронутый файл:** `lib/domain/controllers/data_entry_controller.dart`
+## Testing Commands
+```bash
+# Run all tests
+flutter test
 
-**ЗАДАЧА 3: Редизайн экрана просмотра данных (List View)**
-- **Проблема:** На экране просмотра данных (режим списка) дублируется информация о дате, есть лишние иконки (см. скриншот 3).
-- **Решение:**
-  - Убрать верхний заголовок `Text(_formatDateForList(...))`.
-  - Убрать иконку переключения режимов (`edit`/`list`) из `AppBar`, когда активен режим списка.
-- **Затронутый файл:** `lib/presentation/screens/data_entry_screen.dart`
+# Run specific test categories
+flutter test test/models/           # Data model tests
+flutter test test/controllers/      # Business logic tests
+flutter test test/presentation/     # UI component tests
+flutter test test/data/            # Database operation tests
+flutter test test/domain/use_cases/ # Business use case tests
 
-**ЗАДАЧА 4: Редизайн списка параметров**
-- **Проблема:** Элементы списка на экране "Управление параметрами" выглядят громоздко и неконсистентно по стилю с остальным приложением (см. скриншот 4).
-- **Решение:**
-  - Убрать кнопку "+" из `AppBar` на экране метрик, так как есть FAB.
-  - Сделать дизайн карточки параметра более компактным и стильным, как на вкладке "Запись".
-  - Убрать чип "Пресет".
-  - Унифицировать стиль иконок (темный значок на светлом фоне).
-- **Затронутые файлы:**
-  - `lib/presentation/widgets/parameter_list_widget.dart`
-  - `lib/presentation/screens/metrics_screen.dart`
-  - `lib/utils/parameter_icons.dart`
+# Run specific test file
+flutter test test/domain/controllers/home_controller_test.dart
+
+# Run tests with coverage
+flutter test --coverage
+```
+
+## Common Development Issues & Solutions
+
+**Database Migration Problems:**
+- If database schema issues occur, run `flutter clean` and reinstall
+- Check `DatabaseHelper._onUpgrade()` for migration logic
+- Use `flutter run --debug` to see SQL operation logs
+
+**GetX State Issues:**
+- Ensure controllers use `.obs` for reactive variables
+- Use `Obx()` widgets for UI updates, not `GetBuilder()`
+- Verify dependency injection in `main.dart` AppBindings
+
+**Navigation Parameter Bugs:**
+- Always pass `parameter.id` not array indices when navigating
+- Common bug: loop closures capturing wrong parameter reference
+- Test navigation after any parameter list modifications
+
+## ПРИОРИТЕТ: Исправление UI/UX и логических багов (Август 2025)
+
+### 🎯 ПРИОРИТЕТНАЯ ЗАДАЧА: Обновление дизайна приложения (Редизайн)
+
+**Цель:** Полностью обновить визуальный стиль приложения, чтобы он соответствовал макету в файле `layout.html`. Редизайн должен затронуть все экраны, обеспечив единый и современный пользовательский опыт. При этом вся существующая бизнес-логика, управление состоянием (GetX) и работа с базой данных должны остаться без изменений.
+
+**Основной источник для дизайна:** `layout.html`
+
+#### Что нужно учесть агенту, чтобы избежать ошибок:
+
+1.  **Разделение логики и UI:** Строго придерживайся принципа разделения. Модифицируй только файлы в `lib/presentation/`. **Не изменяй** бизнес-логику в контроллерах (`lib/domain/controllers/`), use cases или репозиториях (`lib/data/`). Твоя задача — изменить "обертку" (UI), а не "начинку" (логику).
+2.  **Сохранение GetX:** Вся реактивность должна по-прежнему управляться через GetX (`.obs`, `Obx`, `Get.find()`). Не заменяй эту систему.
+3.  **Консистентность:** Ключ к успешному редизайну — создание переиспользуемых виджетов для общих элементов UI (карточки, кнопки, иконки), как описано в шаге 2, и их повсеместное использование.
+4.  **Работа с пресетами:** Существующие 15 пресет-параметров в `PresetParametersService.dart` **не должны быть удалены**. Их нужно только обновить:
+    *   Измени их `iconName` на строковые идентификаторы Material Icons, которые используются в `layout.html` (например, `people` в коде станет `'groups'`, `book` станет `'menu_book'` и т.д.).
+    *   Убедись, что UI корректно отображает эти иконки в новом, едином стиле (`tint-box`).
+5.  **Система иконок:** Новый дизайн требует унифицированного стиля для иконок (светло-зеленый фон, темно-зеленая иконка). Это должно быть реализовано через специальный виджет и применяться ко всем иконкам параметров в приложении. `ParameterIcons.dart` нужно будет адаптировать для работы с новыми строковыми именами иконок.
+6.  **Пошаговое выполнение:** Следуй приведенным ниже шагам строго по порядку, чтобы обеспечить плавный и корректный переход на новый дизайн.
+
+---
+
+### Пошаговый план по редизайну приложения
+
+#### Шаг 1: Обновление основной темы (`AppTheme.dart`)
+
+1.  **Извлеки цветовую палитру** из CSS-переменных в `<style>` теге файла `layout.html`:
+    *   `--brand: #88A874` (основной зеленый)
+    *   `--brand-700: #6f8d5f` (темно-зеленый для hover-эффектов)
+    *   `--tint: #e8f1e3` (светло-зеленый для фона иконок)
+    *   `background: #f7faf9` (основной фон приложения)
+2.  **Обнови `AppTheme.lightTheme`** в `lib/presentation/theme/app_theme.dart`:
+    *   Установи `primary` цвет в `#88A874`.
+    *   Установи `scaffoldBackgroundColor` и `backgroundColor` в `#f7faf9`.
+    *   Обнови цвета для кнопок, AppBar и других элементов в соответствии с новым стилем.
+    *   Изучи `layout.html` на предмет шрифтов (используется "Inter") и убедись, что `textTheme` в `AppTheme` соответствует этому.
+3.  **Удали старые, неиспользуемые цветовые константы**, чтобы избежать путаницы.
+
+#### Шаг 2: Создание переиспользуемых UI-компонентов
+
+Чтобы обеспечить консистентность, создай новые виджеты для основных элементов дизайна. Помести их в новую директорию `lib/presentation/widgets/ui_components/`.
+
+1.  **`AppCard.dart`**: Создай виджет, который стилизует `Card` в соответствии с классом `.card` из HTML (белый фон, `borderRadius: 1.25rem`, тень `box-shadow`, рамка `border`).
+2.  **`PrimaryButton.dart` и `OutlineButton.dart`**: Создай виджеты-обертки для `ElevatedButton` и `OutlinedButton`, которые будут применять стили из `.btn-primary` и `.btn-outline` соответственно.
+3.  **`TintedIconBox.dart`**: Это **ключевой** компонент. Создай виджет, который реализует стиль `.tint-box`. Он должен принимать `IconData` и отображать его внутри `Container` с фоном `--tint` (`#e8f1e3`) и цветом иконки `--brand` (`#88A874`), а также с закругленными углами.
+
+#### Шаг 3: Адаптация системы иконок
+
+1.  **Обнови пресеты:** Открой `lib/domain/services/preset_parameters_service.dart`. Пройдись по списку `getDefaultParameters` и замени строковые значения `iconName` на актуальные имена из Material Icons, используемые в `layout.html`. Например:
+    *   `Оценка социальности` (`people`) -> `iconName: 'groups'`
+    *   `Воспоминания обо дне` (`book`) -> `iconName: 'menu_book'`
+    *   И так далее для всех 15 пресетов, сверяясь с иконками в `layout.html`.
+2.  **Адаптируй `ParameterIcons.dart`**: Убедись, что метод `getIcon` корректно работает с новыми строковыми именами иконок. Возможно, потребуется обновить карту `presetIcons`.
+
+#### Шаг 4: Редизайн экранов (Screen-by-Screen)
+
+Теперь, используя созданные компоненты, обнови каждый экран.
+
+1.  **`MainNavigationScreen.dart`**:
+    *   Обнови `BottomNavigationBar`, чтобы он соответствовал секции `<nav>` в макете. Используй `Material Icons` и настрой цвета для активного (`tab-active`) и неактивного состояний.
+
+2.  **`HomeScreen.dart`**:
+    *   Замени `AppBar` на кастомный `header` с фоном `var(--brand)`.
+    *   Перестрой `CalendarWidget` для соответствия новому дизайну. Особое внимание удели стилям дней: `.day-completed`, `.day-selected`, `.day-today`.
+    *   Секцию "Статистика" переделай с использованием `AppCard` и нового виджета `TintedIconBox` для иконок `local_fire_department` и `event`.
+    *   Кнопку "Добавить запись" замени на свой новый виджет `PrimaryButton`.
+
+3.  **`DataEntryScreen.dart`**:
+    *   Полностью переработай UI, ориентируясь на экраны `screen-entry-list`, `screen-entry-number`, `screen-entry-rating`, `screen-entry-text`.
+    *   **Список параметров (`_buildListView`)**: Каждый элемент списка (`_buildParameterListItem`) должен теперь выглядеть как в макете, используя `TintedIconBox`.
+    *   **Экраны ввода (`_buildPageView`)**:
+        *   Верхний `header` и `progress` бар должны быть стилизованы под макет.
+        *   Карточка с названием параметра должна использовать `TintedIconBox` для иконки и иметь крупный заголовок.
+        *   Поля ввода (`TextFormField`, `Slider` и др.) должны быть стилизованы в соответствии с `app_theme.dart`.
+        *   Нижние кнопки навигации должны использовать `PrimaryButton` и `OutlineButton`.
+
+4.  **`MetricsScreen.dart` и `ParameterListWidget.dart`**:
+    *   **Экран метрик**: Обнови карточки и кнопки, используя `AppCard` и `PrimaryButton`. Заглушки для будущих функций должны выглядеть как в секции "Статистика и анализ" макета.
+    *   **Список параметров (`ParameterListWidget`)**: Это критически важный экран. Полностью переделай `_buildParameterTile`, чтобы он соответствовал элементу списка на экране `screen-manage`. Используй `TintedIconBox`, `drag_indicator`, `Switch` и `PopupMenuButton` (`more_vert`), стилизованные под макет.
+
+5.  **`SettingsScreen.dart`**:
+    *   Переделай экран, используя `AppCard` для секций и `PrimaryButton` для кнопки экспорта. Все карточки должны включать `TintedIconBox`.
+
+6.  **`ParameterCreateScreen.dart` / `ParameterEditScreen.dart`**:
+    *   Обнови UI этих экранов, чтобы он соответствовал `screen-step1` и `screen-step2`.
+    *   Особое внимание удели превью карточки параметра — оно должно показывать новый дизайн.
+    *   Реализуй всплывающее окно выбора иконки (`iconSheet`), как показано в макете.
+
+#### Шаг 5: Финальная проверка
+
+1.  **Запусти приложение** и пройдись по всем экранам, сравнивая их с `layout.html`. Убедись, что отступы, шрифты, цвета и размеры соответствуют макету.
+2.  **Проверь всю функциональность**:
+    *   Создание, редактирование и удаление пользовательских параметров.
+    *   Включение/выключение пресет-параметров.
+    *   Ввод данных всех типов (число, текст, рейтинг) за разные дни.
+    *   Корректное отображение статистики на главном экране.
+    *   Экспорт данных в CSV.
+    *   Перетаскивание параметров в списке для изменения порядка.
+3.  **Выполни `flutter analyze`**, чтобы убедиться в отсутствии статических ошибок в коде.
+
+---
 
 ### Architecture Layers
 
@@ -235,6 +362,7 @@ class DailyRecord {
 flutter: sdk                    # Flutter framework
 get: ^4.6.5                    # State management (USE THIS)
 sqflite: ^2.0.0               # SQLite database
+path: ^1.8.0                  # Path utilities
 path_provider: ^2.0.14        # File system access
 share_plus: ^7.2.1           # Native sharing capabilities
 intl: ^0.18.0                # Internationalization/date formatting
@@ -247,17 +375,48 @@ sqflite_common_ffi: ^2.0.0   # SQLite testing support
 
 **NEVER add new dependencies without checking if existing ones can be used**
 
+## Project-Specific Conventions
+
+**File Organization:**
+- Follow Clean Architecture: UI logic in `presentation/`, business logic in `domain/`, data access in `data/`
+- Use `_` prefix for private methods and variables
+- Group related files in subdirectories (e.g., `use_cases/`, `controllers/`)
+
+**Naming Conventions:**
+- Controllers: `*Controller` (e.g., `HomeController`, `DataEntryController`)
+- Use Cases: `*UseCase` (e.g., `CalculateStreakUseCase`)
+- DAOs: `*Dao` (e.g., `ParameterDao`, `DailyRecordDao`)
+- Models: Plain class names (e.g., `Parameter`, `DailyRecord`)
+
+**Code Style:**
+- Use descriptive variable names (`selectedDate` not `date`)
+- Add print statements for debugging complex flows (remove in production)
+- Prefer composition over inheritance
+- Always handle exceptions in database operations
+
+**Russian Language:**
+- UI text and comments can be in Russian as per project requirements
+- Variable/method names should remain in English
+- Error messages and debug prints can be in Russian
+
 ## Critical Development Guidelines
 
 **Database Operations:**
 - Always use try-catch blocks around database operations
 - Test database migrations with version upgrades
 - Use proper transaction handling for bulk operations
+- Database operations are logged with print statements - monitor console during `flutter run --debug`
 
 **GetX State Management:**
 - Use `.obs` for reactive variables that trigger UI updates
 - Call `.update()` on complex objects to notify listeners
 - Avoid rebuilding entire UI - use selective GetX updates
+- CRITICAL: When passing parameters in navigation, ensure correct ID/object is captured (common bug source)
+
+**Navigation & Parameter Passing:**
+- Always use parameter.id (not array index) when navigating to edit screens
+- Verify closure variable capture in loop-based UI generation (for bug in navigation)
+- Test navigation thoroughly after any parameter list changes
 
 **Error Handling:**
 ```dart

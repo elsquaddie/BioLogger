@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // Цветовая палитра по референсу HTML
-  static const Color primaryGreen = Color(0xFF87A96B);     // Sage green #87A96B
-  static const Color primaryLightGreen = Color(0xFF87A96B); // Sage green
-  static const Color secondaryBlue = Color(0xFF5E8C6A);     // Darker green
-  static const Color backgroundLight = Color(0xFFFAF7F0);   // Cream background #FAF7F0
+  // Цветовая палитра из layout.html
+  static const Color brandGreen = Color(0xFF88A874);        // --brand: #88A874
+  static const Color brandGreenDark = Color(0xFF6f8d5f);    // --brand-700: #6f8d5f
+  static const Color tintGreen = Color(0xFFe8f1e3);         // --tint: #e8f1e3
+  static const Color backgroundLight = Color(0xFFf7faf9);   // background: #f7faf9
   static const Color surfaceLight = Color(0xFFFFFFFF);      // White cards
   static const Color errorColor = Color(0xFFE53935);        // Красный для ошибок
   static const Color warningColor = Color(0xFFFF9800);      // Оранжевый для предупреждений
@@ -21,11 +21,11 @@ class AppTheme {
   static ThemeData get lightTheme {
     const ColorScheme colorScheme = ColorScheme.light(
       brightness: Brightness.light,
-      primary: primaryGreen,
+      primary: brandGreen,
       onPrimary: Colors.white,
-      primaryContainer: Color(0xFFA8DAB5),
-      onPrimaryContainer: Color(0xFF002106),
-      secondary: secondaryBlue,
+      primaryContainer: tintGreen,
+      onPrimaryContainer: brandGreenDark,
+      secondary: brandGreenDark,
       onSecondary: Colors.white,
       secondaryContainer: Color(0xFFD1E4FF),
       onSecondaryContainer: Color(0xFF001D36),
@@ -74,10 +74,14 @@ class AppTheme {
       // Card Theme
       cardTheme: CardThemeData(
         elevation: 1,
-        shadowColor: Colors.black.withOpacity(0.1),
-        surfaceTintColor: primaryGreen.withOpacity(0.05),
+        shadowColor: Colors.black.withOpacity(0.06),
+        surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20), // 1.25rem = 20px
+          side: BorderSide(
+            color: Colors.black.withOpacity(0.06),
+            width: 1,
+          ),
         ),
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       ),
@@ -87,7 +91,7 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           elevation: 1,
           shadowColor: Colors.black.withOpacity(0.1),
-          backgroundColor: primaryGreen,
+          backgroundColor: brandGreen,
           foregroundColor: Colors.white,
           disabledBackgroundColor: outline.withOpacity(0.3),
           disabledForegroundColor: textHint,
@@ -107,7 +111,7 @@ class AppTheme {
       // Text Button Theme
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: primaryGreen,
+          foregroundColor: brandGreen,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -123,7 +127,7 @@ class AppTheme {
       // Outlined Button Theme
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: primaryGreen,
+          foregroundColor: brandGreen,
           side: const BorderSide(color: outline, width: 1),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -140,7 +144,7 @@ class AppTheme {
 
       // FloatingActionButton Theme
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: primaryGreen,
+        backgroundColor: brandGreen,
         foregroundColor: Colors.white,
         elevation: 6,
         focusElevation: 8,
@@ -165,7 +169,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: primaryGreen, width: 2),
+          borderSide: const BorderSide(color: brandGreen, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -199,7 +203,8 @@ class AppTheme {
         elevation: 6,
       ),
 
-      // Typography
+      // Typography (Inter font family)
+      fontFamily: 'Inter',
       textTheme: const TextTheme(
         displayLarge: TextStyle(
           fontSize: 57,

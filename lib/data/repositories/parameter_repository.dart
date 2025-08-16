@@ -10,6 +10,7 @@ abstract class ParameterRepository {
   Future<int> updateParameter(Parameter parameter);
   Future<int> toggleParameterEnabled(int id, bool isEnabled);
   Future<int> updateParameterSortOrder(int id, int sortOrder);
+  Future<void> updateParametersSortOrder(List<Parameter> parameters);
   Future<int> deleteParameter(int id);
   Future<bool> hasPresetParameters();
   Future<void> insertPresetParameters(List<Parameter> presets);

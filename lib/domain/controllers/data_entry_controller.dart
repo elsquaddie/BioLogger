@@ -16,6 +16,13 @@ class DataEntryController extends GetxController {
   final enteredValues = <String, dynamic>{}.obs;
   final enteredComments = <String, String>{}.obs;
   final currentParameterIndex = 0.obs;
+  
+  // Отладочный метод для отслеживания изменений индекса
+  void setCurrentParameterIndex(int newIndex, String reason) {
+    print("DataEntryController: Setting currentParameterIndex from ${currentParameterIndex.value} to $newIndex. Reason: $reason");
+    currentParameterIndex.value = newIndex;
+  }
+  final _requestedParameterId = Rx<int?>(null); // Запрошенный ID параметра для навигации
   Rx<DateTime> selectedDate = DateTime.now().obs;
   final initialViewMode = 'list'.obs; // 'list' для превью, 'edit' для редактирования
 
@@ -46,6 +53,21 @@ class DataEntryController extends GetxController {
   
   void setInitialViewMode(String mode) {
     initialViewMode.value = mode;
+    // НЕ сбрасываем индекс автоматически - он должен быть установлен вызывающим кодом
+    // if (mode == 'edit') {
+    //   currentParameterIndex.value = 0;
+    // }
+  }
+  
+  /// НОВАЯ ФУНКЦИЯ: Устанавливает параметр для навигации по ID
+  void setParameterForNavigation(int parameterId) {
+    print("DataEntryController: setParameterForNavigation called with ID: $parameterId");
+    _requestedParameterId.value = parameterId;
+    
+    // Если параметры уже загружены, сразу устанавливаем индекс
+    if (parametersForEntry.isNotEmpty) {
+      _setCurrentParameterByRequestedId();
+    }
   }
 
   void _loadParametersForEntryForDate(DateTime selectedDate) async {
@@ -71,16 +93,59 @@ class DataEntryController extends GetxController {
         enteredComments[parameterId] = '';
       }
     }
+    // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: НЕ сбрасываем индекс на 0!
+    // Вместо этого устанавливаем правильный индекс на основе запрошенного параметра
     if (parametersForEntry.isNotEmpty) {
-      currentParameterIndex.value = 0; // <--- Сбрасываем индекс на 0 при загрузке новых параметров
+      _setCurrentParameterByRequestedId();
     } else {
-      currentParameterIndex.value = -1; // или -1, если параметров нет
+      currentParameterIndex.value = -1; // только если параметров нет
     }
-    update(); // <---  ОБНОВЛЯЕМ UI после загрузки параметров
+    update(); // ОБНОВЛЯЕМ UI после загрузки параметров
+  }
+
+  /// НОВАЯ ФУНКЦИЯ: Устанавливает индекс на основе запрошенного ID параметра
+  void _setCurrentParameterByRequestedId() {
+    if (_requestedParameterId.value != null && parametersForEntry.isNotEmpty) {
+      final requestedId = _requestedParameterId.value!;
+      final foundIndex = parametersForEntry.indexWhere((p) => p.id == requestedId);
+      
+      print("DataEntryController: Looking for parameter ID $requestedId");
+      print("DataEntryController: Available parameters: ${parametersForEntry.map((p) => '${p.name}(${p.id})').toList()}");
+      print("DataEntryController: Found at index: $foundIndex");
+      
+      if (foundIndex != -1) {
+        setCurrentParameterIndex(foundIndex, "Found requested parameter ID $requestedId at index $foundIndex (${parametersForEntry[foundIndex].name})");
+      } else {
+        // Если запрошенный параметр не найден, устанавливаем 0
+        setCurrentParameterIndex(0, "Requested parameter ID $requestedId not found, defaulting to index 0");
+      }
+      
+      // Очищаем запрошенный ID после установки
+      _requestedParameterId.value = null;
+    } else {
+      // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Сохраняем текущий параметр при переупорядочивании
+      // Если есть текущий параметр, пытаемся сохранить его позицию по ID
+      if (parametersForEntry.isNotEmpty && currentParameterIndex.value >= 0 && currentParameterIndex.value < parametersForEntry.length) {
+        final currentParam = parametersForEntry[currentParameterIndex.value];
+        final currentParamId = currentParam.id;
+        
+        // Ищем тот же параметр в новом списке после переупорядочивания
+        final newIndex = parametersForEntry.indexWhere((p) => p.id == currentParamId);
+        if (newIndex != -1 && newIndex != currentParameterIndex.value) {
+          print("DataEntryController: Parameter '${currentParam.name}' moved from index ${currentParameterIndex.value} to $newIndex");
+          setCurrentParameterIndex(newIndex, "Adjusted index after reordering for parameter ${currentParam.name}");
+        } else {
+          print("DataEntryController: Current parameter ${currentParam.name} remains at index ${currentParameterIndex.value}");
+        }
+      } else {
+        // Если нет текущего параметра, устанавливаем 0 (по умолчанию)
+        setCurrentParameterIndex(0, "No current parameter, defaulting to index 0");
+      }
+    }
   }
 
   Parameter? get currentParameter =>
-      parametersForEntry.isNotEmpty && currentParameterIndex.value < parametersForEntry.length
+      parametersForEntry.isNotEmpty && currentParameterIndex.value >= 0 && currentParameterIndex.value < parametersForEntry.length
           ? parametersForEntry[currentParameterIndex.value]
           : null;
 
@@ -96,24 +161,40 @@ class DataEntryController extends GetxController {
   }
 
   void nextParameter() {
+    print("DataEntryController: nextParameter called. Current index: ${currentParameterIndex.value}, Total parameters: ${parametersForEntry.length}");
+    
+    if (parametersForEntry.isEmpty) {
+      print("DataEntryController: No parameters available for navigation");
+      return;
+    }
+    
     if (currentParameterIndex.value < parametersForEntry.length - 1) {
-      currentParameterIndex.value++;
+      setCurrentParameterIndex(currentParameterIndex.value + 1, "User clicked Next button");
     } else {
       // На последнем параметре - сохраняем данные
+      print("DataEntryController: On last parameter, saving data");
       saveDailyRecord();
     }
   }
 
   void previousParameter() {
+    print("DataEntryController: previousParameter called. Current index: ${currentParameterIndex.value}, Total parameters: ${parametersForEntry.length}");
+    
+    if (parametersForEntry.isEmpty) {
+      print("DataEntryController: No parameters available for navigation");
+      return;
+    }
+    
     if (currentParameterIndex.value > 0) {
-      currentParameterIndex.value--;
+      setCurrentParameterIndex(currentParameterIndex.value - 1, "User clicked Previous button");
     } else {
-      // Already at first parameter
+      print("DataEntryController: Already at first parameter");
     }
   }
 
   Future<void> saveDailyRecord() async {
-    // Saving daily record
+    // Убираем клавиатуру в самом начале, перед всеми операциями
+    FocusManager.instance.primaryFocus?.unfocus();
     
     final dataValuesMap = <String, dynamic>{};
     final commentsMap = <String, String>{};
@@ -160,24 +241,27 @@ class DataEntryController extends GetxController {
         print('NavigationController не найден для навигации: $e');
       }
       
-      // Убираем клавиатуру перед показом уведомления и переходом
-      FocusManager.instance.primaryFocus?.unfocus();
-      
       Get.snackbar(
         'Успех',
         'Данные сохранены за ${DateFormat('dd.MM.yyyy').format(selectedDate.value)}',
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.only(bottom: 24, left: 12, right: 12),
+        snackPosition: SnackPosition.TOP,
+        margin: const EdgeInsets.only(top: 16, left: 16, right: 16),
+        backgroundColor: Get.theme.colorScheme.primaryContainer,
+        colorText: Get.theme.colorScheme.onPrimaryContainer,
+        borderRadius: 12,
+        duration: const Duration(seconds: 3),
       );
     } catch (e) {
       // Error saving daily record: $e
-      FocusManager.instance.primaryFocus?.unfocus();
-      
       Get.snackbar(
         'Ошибка',
         'Не удалось сохранить данные',
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.only(bottom: 24, left: 12, right: 12),
+        snackPosition: SnackPosition.TOP,
+        margin: const EdgeInsets.only(top: 16, left: 16, right: 16),
+        backgroundColor: Get.theme.colorScheme.errorContainer,
+        colorText: Get.theme.colorScheme.onErrorContainer,
+        borderRadius: 12,
+        duration: const Duration(seconds: 4),
       );
     }
   }

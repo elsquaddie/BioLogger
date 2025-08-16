@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../domain/controllers/home_controller.dart';
 import '../../domain/controllers/data_entry_controller.dart';
+import '../../domain/controllers/metrics_tab_controller.dart';
+import '../theme/app_theme.dart';
 import 'home_screen.dart';
 import 'data_entry_screen.dart';
 import 'metrics_screen.dart';
@@ -61,65 +63,170 @@ class MainNavigationScreen extends StatelessWidget {
       const SettingsScreen(),    // 3 - Настройки
     ];
 
-    return Scaffold(
-      body: Obx(() => IndexedStack(
-        index: navigationController.currentIndex.value,
-        children: screens,
-      )),
-      bottomNavigationBar: Obx(() => BottomNavigationBar(
-        currentIndex: navigationController.currentIndex.value,
-        onTap: (index) {
-          if (index == 1) {
-            // При нажатии на "Ввод" устанавливаем текущую дату и режим списка
-            final today = DateTime.now();
-            homeController.selectDate(today);
-            
-            try {
-              final dataEntryController = Get.find<DataEntryController>();
-              dataEntryController.selectDate(today);
-              dataEntryController.setInitialViewMode('list'); // Всегда показываем список при переходе по вкладке
-            } catch (e) {
-              print('DataEntryController не найден при переходе на ввод: $e');
-            }
-          }
-          navigationController.changeTab(index);
-        },
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: theme.colorScheme.surface,
-        selectedItemColor: theme.colorScheme.primary,
-        unselectedItemColor: theme.colorScheme.onSurface.withOpacity(0.6),
-        selectedLabelStyle: const TextStyle(
-          fontWeight: FontWeight.w600,
-          fontSize: 12,
-        ),
-        unselectedLabelStyle: const TextStyle(
-          fontWeight: FontWeight.normal,
-          fontSize: 12,
-        ),
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard_outlined),
-            activeIcon: Icon(Icons.dashboard),
-            label: 'Главная',
+    return PopScope(
+      canPop: false, // Предотвращаем автоматический выход из приложения
+      onPopInvoked: (didPop) {
+        if (didPop) return; // Если уже обработано, не делаем ничего
+        
+        _handleBackPress(navigationController);
+      },
+      child: Scaffold(
+        body: Obx(() => AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          transitionBuilder: (Widget child, Animation<double> animation) {
+            return SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(1.0, 0.0), // Въезжает справа
+                end: Offset.zero,
+              ).animate(CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeInOut,
+              )),
+              child: FadeTransition(
+                opacity: animation,
+                child: child,
+              ),
+            );
+          },
+          child: Container(
+            key: ValueKey(navigationController.currentIndex.value),
+            child: screens[navigationController.currentIndex.value],
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.add_task_outlined),
-            activeIcon: Icon(Icons.add_task),
-            label: 'Запись',
+        )),
+        bottomNavigationBar: Obx(() => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            border: Border(
+              top: BorderSide(
+                color: Color(0xFFE5E7EB), // border-t color
+                width: 1,
+              ),
+            ),
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.analytics_outlined),
-            activeIcon: Icon(Icons.analytics),
-            label: 'Данные',
+          child: SafeArea(
+            child: Container(
+              height: 60,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Row(
+                children: [
+                  _buildNavItem(
+                    icon: Icons.grid_view,
+                    label: 'Главная',
+                    isActive: navigationController.currentIndex.value == 0,
+                    onTap: () => navigationController.changeTab(0),
+                  ),
+                  _buildNavItem(
+                    icon: Icons.check_circle,
+                    label: 'Запись',
+                    isActive: navigationController.currentIndex.value == 1,
+                    onTap: () {
+                      // При нажатии на "Ввод" устанавливаем текущую дату и режим списка
+                      final today = DateTime.now();
+                      homeController.selectDate(today);
+                      
+                      try {
+                        final dataEntryController = Get.find<DataEntryController>();
+                        dataEntryController.selectDate(today);
+                        dataEntryController.setInitialViewMode('list');
+                      } catch (e) {
+                        print('DataEntryController не найден при переходе на ввод: $e');
+                      }
+                      navigationController.changeTab(1);
+                    },
+                  ),
+                  _buildNavItem(
+                    icon: Icons.insights,
+                    label: 'Данные',
+                    isActive: navigationController.currentIndex.value == 2,
+                    onTap: () => navigationController.changeTab(2),
+                  ),
+                  _buildNavItem(
+                    icon: Icons.settings,
+                    label: 'Настройки',
+                    isActive: navigationController.currentIndex.value == 3,
+                    onTap: () => navigationController.changeTab(3),
+                  ),
+                ],
+              ),
+            ),
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings_outlined),
-            activeIcon: Icon(Icons.settings),
-            label: 'Настройки',
-          ),
-        ],
-      )),
+        )),
+      ),
     );
+  }
+  
+  /// Создает элемент навигации в стиле макета
+  Widget _buildNavItem({
+    required IconData icon,
+    required String label,
+    required bool isActive,
+    required VoidCallback onTap,
+  }) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: isActive ? AppTheme.brandGreen : const Color(0xFF6B7280),
+              size: 24,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: isActive ? AppTheme.brandGreen : const Color(0xFF6B7280),
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Обработка нажатия системной кнопки "Назад"
+  void _handleBackPress(NavigationController navigationController) {
+    try {
+      // Проверяем, находимся ли мы на экране ввода данных в режиме редактирования
+      if (navigationController.currentIndex.value == 1) {
+        final dataEntryController = Get.find<DataEntryController>();
+        if (dataEntryController.initialViewMode.value == 'edit') {
+          // Возвращаемся к списку параметров
+          dataEntryController.setInitialViewMode('list');
+          return;
+        }
+      }
+    } catch (e) {
+      // DataEntryController может быть не инициализирован
+    }
+
+    try {
+      // Проверяем, находимся ли мы на экране метрик с открытым списком параметров
+      final metricsTabController = Get.find<MetricsTabController>();
+      if (navigationController.currentIndex.value == 2 && 
+          metricsTabController.isShowingParameterList.value) {
+        // Возвращаемся к метрикам
+        metricsTabController.showMetrics();
+        return;
+      }
+    } catch (e) {
+      // MetricsTabController может быть не инициализирован
+    }
+
+    // Проверяем, находимся ли мы на вкладке, отличной от главной
+    if (navigationController.currentIndex.value != 0) {
+      // Переключаемся на главную вкладку
+      navigationController.goToHome();
+      return;
+    }
+
+    // Если мы уже на главной вкладке, выходим из приложения
+    Get.back();
   }
 }
 
